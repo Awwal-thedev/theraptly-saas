@@ -264,7 +264,7 @@ export default function CoursePublishPage() {
                 </p>
               </div>
               <div className="w-full sm:w-[360px] sm:shrink-0">
-                <Select value={renewal} onValueChange={(v) => setRenewal(v)}>
+                <Select value={renewal} onValueChange={(v) => setRenewal(v ?? "")}>
                   <SelectTrigger className={triggerClass}>
                     <SelectValue />
                   </SelectTrigger>
@@ -297,7 +297,7 @@ export default function CoursePublishPage() {
                         <Select
                           value={r.preset}
                           onValueChange={(v) =>
-                            updateReminder(r.id, { preset: v })
+                            updateReminder(r.id, { preset: v ?? "" })
                           }
                         >
                           <SelectTrigger className={triggerClass}>
@@ -346,7 +346,7 @@ export default function CoursePublishPage() {
                           <Select
                             value={r.unit}
                             onValueChange={(v) =>
-                              updateReminder(r.id, { unit: v })
+                              updateReminder(r.id, { unit: v ?? "" })
                             }
                           >
                             <SelectTrigger className="font-inter !h-12 w-full rounded-xl border-[#e5e7ea] px-4 text-[15px] text-[#131927]">

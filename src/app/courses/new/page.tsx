@@ -602,7 +602,8 @@ export default function NewCoursePage() {
                 <FieldLabel label="Category" required />
                 <Select
                   value={category || undefined}
-                  onValueChange={(v) => {
+                  onValueChange={(raw) => {
+                    const v = raw ?? ""
                     setCategory(v)
                     if (v !== CUSTOM) setCustomCategory("")
                     setSubmitAttempted(false)
@@ -1053,7 +1054,7 @@ function CourseDetailsStep({
       <FormRow label="Content Type">
         <Select
           value={details.contentType || undefined}
-          onValueChange={(v) => onUpdate("contentType", v)}
+          onValueChange={(v) => onUpdate("contentType", v ?? "")}
         >
           <SelectTrigger className="!h-12 w-full rounded-[12px] border-[1.5px] border-[#e5e7ea] bg-white px-4 text-[15px] data-[placeholder]:text-[#979797]">
             <SelectValue placeholder="Select content type" />
@@ -1071,7 +1072,7 @@ function CourseDetailsStep({
       <FormRow label="No of Notes / Slides">
         <Select
           value={details.notesCount || undefined}
-          onValueChange={(v) => onUpdate("notesCount", v)}
+          onValueChange={(v) => onUpdate("notesCount", v ?? "")}
         >
           <SelectTrigger className="!h-12 w-full rounded-[12px] border-[1.5px] border-[#e5e7ea] bg-white px-4 text-[15px] data-[placeholder]:text-[#979797]">
             <SelectValue placeholder="Select count" />
@@ -2312,7 +2313,7 @@ function CourseQuizStep({
       <QuizRow label="Difficulty:">
         <Select
           value={quiz.difficulty || undefined}
-          onValueChange={(v) => onUpdate("difficulty", v)}
+          onValueChange={(v) => onUpdate("difficulty", v ?? "")}
         >
           <SelectTrigger className="!h-12 w-full rounded-[12px] border-[1.5px] border-[#e5e7ea] bg-white px-4 text-[15px]">
             <SelectValue placeholder="Select difficulty" />
@@ -2330,7 +2331,7 @@ function CourseQuizStep({
       <QuizRow label="Question Type:">
         <Select
           value={quiz.questionType || undefined}
-          onValueChange={(v) => onUpdate("questionType", v)}
+          onValueChange={(v) => onUpdate("questionType", v ?? "")}
         >
           <SelectTrigger className="!h-12 w-full rounded-[12px] border-[1.5px] border-[#e5e7ea] bg-white px-4 text-[15px]">
             <SelectValue placeholder="Select question type" />
@@ -2348,7 +2349,7 @@ function CourseQuizStep({
       <QuizRow label="Estimated Duration">
         <Select
           value={quiz.duration || undefined}
-          onValueChange={(v) => onUpdate("duration", v)}
+          onValueChange={(v) => onUpdate("duration", v ?? "")}
         >
           <SelectTrigger className="!h-12 w-full rounded-[12px] border-[1.5px] border-[#e5e7ea] bg-white px-4 text-[15px]">
             <SelectValue placeholder="Select duration" />

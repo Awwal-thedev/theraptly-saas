@@ -801,7 +801,7 @@ function SelectField({
   return (
     <div className="flex w-full flex-col gap-2.5">
       <FieldLabel label={label} required={required} optional={optional} />
-      <Select value={value || undefined} onValueChange={onChange}>
+      <Select value={value || undefined} onValueChange={(v) => onChange(v ?? "")}>
         <SelectTrigger
           className={cn(
             "!h-[60px] w-full rounded-[14px] border-[1.5px] bg-white px-[18px] text-[16px] data-[placeholder]:text-[#8c8c8c]",
@@ -1289,7 +1289,7 @@ function TeamMemberRow({
         )}
         <Select
           value={row.role || undefined}
-          onValueChange={(v) => onUpdate({ role: v })}
+          onValueChange={(v) => onUpdate({ role: v ?? "" })}
         >
           <SelectTrigger className="!h-[56px] w-full rounded-[12px] border-[1.5px] border-[#e5e7ea] bg-white px-[18px] text-[16px] data-[placeholder]:text-[#8c8c8c]">
             <SelectValue placeholder="Select role" />
@@ -1313,7 +1313,7 @@ function TeamMemberRow({
         )}
         <Select
           value={row.permission || undefined}
-          onValueChange={(v) => onUpdate({ permission: v })}
+          onValueChange={(v) => onUpdate({ permission: v ?? "" })}
         >
           <SelectTrigger className="!h-[56px] w-full rounded-[12px] border-[1.5px] border-[#e5e7ea] bg-white px-[18px] text-[16px] data-[placeholder]:text-[#8c8c8c]">
             <SelectValue placeholder="Permissions" />

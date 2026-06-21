@@ -34,6 +34,7 @@ import {
   type QuizQuestion,
 } from "@/lib/course-content"
 import { useAuth } from "@/lib/auth/auth-context"
+import { appendCourse } from "@/lib/client-store"
 import { readPending, writePending } from "@/lib/pending-course"
 import { DatePicker } from "@/components/courses/date-picker"
 import { ResultModal } from "@/components/courses/result-modal"
@@ -50,7 +51,7 @@ import {
 } from "@/components/ui/select"
 
 const TOTAL_STEPS = 8
-const GENERATION_MS = 8000
+const GENERATION_MS = 90_000
 
 function slugify(input: string): string {
   return (
@@ -382,6 +383,26 @@ export default function NewCoursePage() {
     // so the modal can be previewed without rolling the dice.
     const forceError = searchParams.get("result") === "error"
     await new Promise((r) => window.setTimeout(r, 900))
+    if (!forceError && details) {
+      // Persist the new course so it shows up in /courses, /dashboard, etc.
+      // The shape mirrors the existing `Course` seed type — when the backend
+      // lands this becomes a server action and the same fields get returned.
+      const today = new Date()
+      const date = today.toLocaleDateString("en-US", {
+        month: "short",
+        day: "2-digit",
+        year: "numeric",
+      })
+      appendCourse({
+        id: slugify(details.title),
+        name: details.title,
+        type: details.detectedCategory || "General",
+        assigned: assignees.length,
+        completion: "0%",
+        date,
+        status: "Active",
+      })
+    }
     setPublishStatus(forceError ? "error" : "success")
   }
   function back() {

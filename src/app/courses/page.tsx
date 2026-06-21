@@ -16,6 +16,7 @@ import {
 
 import { cn } from "@/lib/utils"
 import { allCourses, dateValue, type CourseRow } from "@/lib/all-courses"
+import { useStoredCourses } from "@/lib/client-store"
 import { getRecentMap, recordCourseActivity } from "@/lib/recent-courses"
 import { AppShell } from "@/components/app/app-shell"
 import { EmptyStateCard } from "@/components/empty-state-card"
@@ -72,7 +73,26 @@ function pageList(current: number, total: number): (number | "…")[] {
 
 export default function CoursesPage() {
   const router = useRouter()
-  const [list, setList] = useState<CourseRow[]>(allCourses)
+  const storedCourses = useStoredCourses()
+  // Seed + courses created via the wizard.
+  const merged: CourseRow[] = useMemo(
+    () => [
+      ...storedCourses.map((c) => ({
+        id: c.id,
+        name: c.name,
+        category: c.type,
+        assigned: c.assigned,
+        role: "All staff",
+        date: c.date,
+        source: "created" as const,
+      })),
+      ...allCourses,
+    ],
+    [storedCourses]
+  )
+  const [list, setList] = useState<CourseRow[]>(merged)
+  // Re-merge whenever the stored list changes.
+  useEffect(() => setList(merged), [merged])
   const [recent, setRecent] = useState<Record<string, number>>({})
   const [query, setQuery] = useState("")
   const [page, setPage] = useState(1)

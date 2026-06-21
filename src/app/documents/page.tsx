@@ -16,7 +16,13 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { documents, type DocItem, type DocStatus } from "@/lib/documents"
+import {
+  appendDocument,
+  removeDocument,
+  updateDocument,
+  useStoredDocuments,
+} from "@/lib/client-store"
+import { documents as docsSeed, type DocItem, type DocStatus } from "@/lib/documents"
 import { AppShell } from "@/components/app/app-shell"
 import { EmptyStateCard } from "@/components/empty-state-card"
 import { Button } from "@/components/ui/button"
@@ -95,7 +101,14 @@ function pageList(current: number, total: number): (number | "…")[] {
 
 export default function DocumentsPage() {
   const router = useRouter()
-  const [list, setList] = useState<DocItem[]>(documents)
+  const storedDocs = useStoredDocuments()
+  // Local seed + anything uploaded by the user.
+  const merged = useMemo<DocItem[]>(
+    () => [...storedDocs, ...docsSeed],
+    [storedDocs]
+  )
+  const [list, setList] = useState<DocItem[]>(merged)
+  useEffect(() => setList(merged), [merged])
   const [query, setQuery] = useState("")
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -122,6 +135,8 @@ export default function DocumentsPage() {
     setList((prev) =>
       prev.map((d) => (d.id === id ? { ...d, status, courseId } : d))
     )
+    // Persist for stored items so the status update survives a refresh.
+    updateDocument(id, { status, courseId })
   }
 
   // Simulate AI generating a course from the document.
@@ -151,6 +166,8 @@ export default function DocumentsPage() {
       }
     })
     setList((prev) => [...added, ...prev])
+    // Persist so it shows in /documents, /dashboard etc. across reloads.
+    added.forEach((d) => appendDocument(d))
     setUploadOpen(false)
     setPage(1)
     added.forEach((d) => processDocument(d.id))
@@ -158,6 +175,7 @@ export default function DocumentsPage() {
 
   function removeDoc(id: string) {
     setList((prev) => prev.filter((d) => d.id !== id))
+    removeDocument(id)
   }
 
   // A document is only linkable once its course has been generated.

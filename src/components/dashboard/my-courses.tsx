@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation"
 import { BookOpen, FileText } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { courses } from "@/lib/courses"
+import { useStoredCourses } from "@/lib/client-store"
+import { courses as coursesSeed } from "@/lib/courses"
 import { SearchInput } from "@/components/ui/search-input"
 
 function CourseIcon({ blue }: { blue: boolean }) {
@@ -36,6 +37,8 @@ function ViewCourse({ id }: { id: string }) {
 
 export function MyCourses() {
   const router = useRouter()
+  const storedCourses = useStoredCourses()
+  const courses = [...storedCourses, ...coursesSeed]
   const [query, setQuery] = useState("")
   const filtered = courses.filter((c) =>
     c.name.toLowerCase().includes(query.trim().toLowerCase())

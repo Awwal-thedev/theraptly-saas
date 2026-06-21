@@ -13,7 +13,8 @@ import {
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { avatarTone, initialsOf, staff, type StaffMember } from "@/lib/staff"
+import { useStoredStaff } from "@/lib/client-store"
+import { avatarTone, initialsOf, staff as staffSeed, type StaffMember } from "@/lib/staff"
 import { AppShell } from "@/components/app/app-shell"
 import { EmptyStateCard } from "@/components/empty-state-card"
 import { Button } from "@/components/ui/button"
@@ -98,6 +99,12 @@ export default function StaffPage() {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
 
+  const storedStaff = useStoredStaff()
+  const staff: StaffMember[] = useMemo(
+    () => [...storedStaff, ...staffSeed],
+    [storedStaff]
+  )
+
   const q = query.trim().toLowerCase()
   const filtered: StaffMember[] = useMemo(
     () =>
@@ -107,7 +114,7 @@ export default function StaffPage() {
           s.email.toLowerCase().includes(q) ||
           s.role.toLowerCase().includes(q)
       ),
-    [q]
+    [staff, q]
   )
 
   const total = filtered.length

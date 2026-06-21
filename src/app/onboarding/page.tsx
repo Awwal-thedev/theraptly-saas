@@ -14,6 +14,8 @@ import {
 import { toast } from "sonner"
 
 import { useAuth } from "@/lib/auth/auth-context"
+import { appendStaff } from "@/lib/client-store"
+import { type StaffMember } from "@/lib/staff"
 import { cn } from "@/lib/utils"
 import { LogoMark } from "@/components/brand/logo"
 import { Splash } from "@/components/brand/splash"
@@ -324,6 +326,33 @@ export default function OnboardingPage() {
         teamSize: details.staff,
         frameworks: [],
       })
+      // Materialise team members + workers from the wizard so /staff isn't
+      // empty after onboarding. Backend will replace this with real invites.
+      const seeded: StaffMember[] = []
+      teamRows
+        .filter((r) => r.email.trim() && r.role.trim())
+        .forEach((r) => {
+          seeded.push({
+            id: `team-${Math.random().toString(36).slice(2, 10)}`,
+            name: r.email.split("@")[0].replace(/[._]/g, " "),
+            email: r.email.trim(),
+            role: (r.role as StaffMember["role"]) || "Supervisor",
+            invitedDaysAgo: 0,
+            online: false,
+            jobTitle: r.permission || undefined,
+          })
+        })
+      workerEmails.forEach((e) =>
+        seeded.push({
+          id: `worker-${Math.random().toString(36).slice(2, 10)}`,
+          name: e.split("@")[0].replace(/[._]/g, " "),
+          email: e,
+          role: "Direct Support Professional (DSP)",
+          invitedDaysAgo: 0,
+          online: false,
+        })
+      )
+      if (seeded.length) appendStaff(seeded)
       router.replace("/onboarding/done")
     } catch {
       toast.error("Something went wrong. Please try again.")

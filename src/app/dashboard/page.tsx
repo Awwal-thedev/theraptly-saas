@@ -10,7 +10,12 @@ import {
 
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/lib/auth/auth-context"
-import { courses } from "@/lib/courses"
+import {
+  useStoredCourses,
+  useStoredDocuments,
+  useStoredStaff,
+} from "@/lib/client-store"
+import { courses as coursesSeed } from "@/lib/courses"
 import { documents as docsSeed } from "@/lib/documents"
 import { staff as staffSeed } from "@/lib/staff"
 import { AppShell } from "@/components/app/app-shell"
@@ -56,6 +61,12 @@ function Card({
 
 export default function DashboardPage() {
   const { user } = useAuth()
+  const storedCourses = useStoredCourses()
+  const storedDocs = useStoredDocuments()
+  const storedStaff = useStoredStaff()
+
+  // Seed + anything created locally.
+  const courses = [...storedCourses, ...coursesSeed]
 
   // Real numbers derived from the current data sources. Backend will swap
   // these for live queries; the calculation shape stays the same.
@@ -102,7 +113,9 @@ export default function DashboardPage() {
 
   // Empty when the user hasn't onboarded OR has zero courses/staff/docs.
   const hasNoData =
-    totalCourses === 0 && staffSeed.length === 0 && docsSeed.length === 0
+    totalCourses === 0 &&
+    staffSeed.length + storedStaff.length === 0 &&
+    docsSeed.length + storedDocs.length === 0
   const showEmptyState = (user && !user.onboarded) || hasNoData
 
   return (

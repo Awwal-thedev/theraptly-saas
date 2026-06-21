@@ -16,6 +16,7 @@ import {
 import { CheckCircleIcon } from "@heroicons/react/24/solid"
 
 import { useAuth } from "@/lib/auth/auth-context"
+import { useStoredCourses } from "@/lib/client-store"
 import { getCourse } from "@/lib/courses"
 import { cn } from "@/lib/utils"
 import { Logo } from "@/components/brand/logo"
@@ -184,8 +185,10 @@ export default function CourseLearnPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const params = useParams<{ id: string }>()
-  const course = getCourse(params.id)
-  const title = course?.name ?? "Health & Safety Practices"
+  const storedCourses = useStoredCourses()
+  const course =
+    getCourse(params.id) ?? storedCourses.find((c) => c.id === params.id)
+  const title = course?.name ?? "Untitled course"
 
   const STORAGE_KEY = `theraptly:course-progress:${params.id}`
 

@@ -12,6 +12,7 @@ import {
 } from "@heroicons/react/24/solid"
 import type { ComponentType, SVGProps } from "react"
 
+import { useStoredCourses } from "@/lib/client-store"
 import { getCourse } from "@/lib/courses"
 import { recordCourseActivity } from "@/lib/recent-courses"
 import { AppShell } from "@/components/app/app-shell"
@@ -34,8 +35,10 @@ const detailStats: {
 export default function CourseDetailPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
-  const course = getCourse(params.id)
-  const title = course?.name ?? "Course Details"
+  const storedCourses = useStoredCourses()
+  const stored = storedCourses.find((c) => c.id === params.id)
+  const course = getCourse(params.id) ?? stored
+  const title = course?.name ?? "Untitled course"
   const status = course?.status ?? "Active"
 
   useEffect(() => {

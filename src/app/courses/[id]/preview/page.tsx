@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { CheckCircleIcon } from "@heroicons/react/24/solid"
 
+import { useStoredCourses } from "@/lib/client-store"
 import { getCourse } from "@/lib/courses"
 import { cn } from "@/lib/utils"
 import { AppShell } from "@/components/app/app-shell"
@@ -83,8 +84,10 @@ function MetaChip({
 
 export default function CoursePreviewPage() {
   const params = useParams<{ id: string }>()
-  const course = getCourse(params.id)
-  const title = course?.name ?? "Health & Safety Practices"
+  const storedCourses = useStoredCourses()
+  const course =
+    getCourse(params.id) ?? storedCourses.find((c) => c.id === params.id)
+  const title = course?.name ?? "Untitled course"
   const [open, setOpen] = useState<number[]>([0])
 
   const toggle = (i: number) =>

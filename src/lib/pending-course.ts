@@ -17,6 +17,12 @@ export interface PendingCourse {
   durationMs: number
   /** Set to true once the user has dismissed/acted on the ready banner. */
   acknowledged?: boolean
+  /**
+   * True once the user has finished the publish flow. Switches the dashboard
+   * banner from in-flight "generating…" to a persistent "Course published"
+   * confirmation that stays until dismissed.
+   */
+  published?: boolean
 }
 
 export function readPending(): PendingCourse | null {

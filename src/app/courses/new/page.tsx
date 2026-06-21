@@ -393,14 +393,25 @@ export default function NewCoursePage() {
         day: "2-digit",
         year: "numeric",
       })
+      const slug = slugify(details.title)
       appendCourse({
-        id: slugify(details.title),
+        id: slug,
         name: details.title,
         type: details.detectedCategory || "General",
         assigned: assignees.length,
         completion: "0%",
         date,
         status: "Active",
+      })
+      // Surface a "Course published" notification on the dashboard until the
+      // user dismisses it. Same store as the in-flight tracker, different
+      // status — banner picks which UI to render off `published`.
+      writePending({
+        id: slug,
+        title: details.title,
+        startedAt: Date.now(),
+        durationMs: 0,
+        published: true,
       })
     }
     setPublishStatus(forceError ? "error" : "success")

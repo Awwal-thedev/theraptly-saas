@@ -5,7 +5,15 @@
       "Bash(echo \"- [Theraptly product]\\(theraptly-product.md\\) — it's a healthcare staff training & compliance LMS, NOT a therapy app\")",
       "Bash(echo \"- [Frontend stack]\\(theraptly-frontend-stack.md\\) — Next.js + shadcn/ui + Tailwind + mock auth layer\")",
       "Bash(npm --version)",
-      "Bash(npx --yes create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --use-npm --no-git --yes)"
+      "Bash(npx --yes create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --use-npm --no-git --yes)",
+      "Bash(npx --yes shadcn@latest init --help)",
+      "Bash(npx --yes shadcn@latest init -d -f)",
+      "Bash(npx --yes shadcn@latest add button input label card form select checkbox separator avatar progress badge sonner tabs dropdown-menu --yes)",
+      "Bash(npx --yes shadcn@latest add form --yes --overwrite)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT: $?\")",
+      "PowerShell(Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -Unique | ForEach-Object { Stop-Process -Id $_ -Force -ErrorAction SilentlyContinue }; \"done\")",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }

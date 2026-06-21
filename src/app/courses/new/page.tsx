@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/select"
 
 const TOTAL_STEPS = 8
-const GENERATION_MS = 90_000
+const GENERATION_MS = 8000
 
 function slugify(input: string): string {
   return (

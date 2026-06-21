@@ -1,133 +1,272 @@
 "use client"
 
 /**
- * Mock auth layer for Theraptly.
+ * Real auth layer for Theraptly, backed by Supabase.
  *
- * This deliberately mimics the shape of a real auth provider (session,
- * sign-in/up/out, async calls) but persists to localStorage so the frontend
- * is fully functional with no backend. Swap the function bodies for calls to
- * Clerk / NextAuth / Supabase later without touching any screen.
+ * Flow:
+ *  - signUp        → creates the auth user, Supabase emails a 6-digit code
+ *  - verifyEmail   → confirms the code, establishing a session
+ *  - signIn        → email + password
+ *  - completeOnboarding → persists the org (via a Server Action) + marks profile onboarded
+ *
+ * `user` is derived from the Supabase session joined with the `profiles` row
+ * (which carries `onboarded` and the linked organization).
  */
 
 import * as React from "react"
+import type { Session } from "@supabase/supabase-js"
 
+import { createClient } from "@/lib/supabase/client"
+import {
+  completeOnboardingAction,
+  completeWorkerOnboardingAction,
+} from "@/app/onboarding/actions"
 import type {
   Organization,
   SignInInput,
   SignUpInput,
   User,
+  UserRole,
 } from "@/lib/auth/types"
 
-const STORAGE_KEY = "theraptly:session"
+const PENDING_EMAIL_KEY = "theraptly:pending-email"
 
 interface AuthContextValue {
   user: User | null
   loading: boolean
+  /** Email awaiting verification (set after signUp, before a session exists). */
+  pendingEmail: string | null
+  signUp: (input: SignUpInput) => Promise<{ needsVerification: boolean }>
   signIn: (input: SignInInput) => Promise<User>
-  signUp: (input: SignUpInput) => Promise<User>
-  signOut: () => void
-  completeOnboarding: (organization: Organization) => Promise<User>
+  verifyEmail: (code: string) => Promise<void>
+  resendCode: () => Promise<void>
+  completeOnboarding: (
+    organization: Organization,
+    invites?: string[]
+  ) => Promise<User>
+  completeWorkerOnboarding: () => Promise<User>
+  signOut: () => Promise<void>
+  refresh: () => Promise<User | null>
 }
 
 const AuthContext = React.createContext<AuthContextValue | null>(null)
 
-function loadUser(): User | null {
-  if (typeof window === "undefined") return null
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as User) : null
-  } catch {
-    return null
-  }
-}
-
-function persist(user: User | null) {
-  if (typeof window === "undefined") return
-  if (user) {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user))
-  } else {
-    window.localStorage.removeItem(STORAGE_KEY)
-  }
-}
-
-// Simulate network latency so loading states are real.
-const delay = (ms = 700) => new Promise((r) => setTimeout(r, ms))
-
-function makeId() {
-  return `usr_${Math.random().toString(36).slice(2, 10)}`
+type ProfileRow = {
+  full_name: string | null
+  role: string | null
+  onboarded: boolean | null
+  organizations:
+    | {
+        name: string
+        type: string
+        team_size: string
+        frameworks: string[]
+      }
+    | {
+        name: string
+        type: string
+        team_size: string
+        frameworks: string[]
+      }[]
+    | null
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const supabase = React.useMemo(() => createClient(), [])
   const [user, setUser] = React.useState<User | null>(null)
   const [loading, setLoading] = React.useState(true)
+  const [pendingEmail, setPendingEmail] = React.useState<string | null>(null)
 
-  React.useEffect(() => {
-    setUser(loadUser())
-    setLoading(false)
-  }, [])
+  const buildUser = React.useCallback(
+    async (session: Session | null): Promise<User | null> => {
+      if (!session?.user) return null
+      const authUser = session.user
 
-  const signUp = React.useCallback(async (input: SignUpInput) => {
-    await delay()
-    const newUser: User = {
-      id: makeId(),
-      fullName: input.fullName,
-      email: input.email,
-      role: input.role,
-      onboarded: false,
-      createdAt: new Date().toISOString(),
-    }
-    persist(newUser)
-    setUser(newUser)
-    return newUser
-  }, [])
+      const { data } = await supabase
+        .from("profiles")
+        .select(
+          "full_name, role, onboarded, organizations(name, type, team_size, frameworks)"
+        )
+        .eq("id", authUser.id)
+        .maybeSingle()
 
-  const signIn = React.useCallback(async (input: SignInInput) => {
-    await delay()
-    // Mock: reuse any stored user, else fabricate a returning admin.
-    const existing = loadUser()
-    const signedIn: User =
-      existing && existing.email === input.email
-        ? existing
-        : {
-            id: makeId(),
-            fullName: input.email.split("@")[0].replace(/[._-]/g, " "),
-            email: input.email,
-            role: "admin",
-            onboarded: true,
-            organization: {
-              name: "Demo Health System",
-              type: "hospital",
-              teamSize: "201-1000",
-              frameworks: ["HIPAA", "OSHA"],
-            },
-            createdAt: new Date().toISOString(),
+      const profile = data as ProfileRow | null
+      const orgs = profile?.organizations
+      const orgRow = Array.isArray(orgs) ? orgs[0] : orgs
+      const organization: Organization | undefined = orgRow
+        ? {
+            name: orgRow.name,
+            type: orgRow.type as Organization["type"],
+            teamSize: orgRow.team_size,
+            frameworks: orgRow.frameworks ?? [],
           }
-    persist(signedIn)
-    setUser(signedIn)
-    return signedIn
-  }, [])
+        : undefined
 
-  const completeOnboarding = React.useCallback(
-    async (organization: Organization) => {
-      await delay(500)
-      const current = loadUser()
-      if (!current) throw new Error("No active session")
-      const updated: User = { ...current, organization, onboarded: true }
-      persist(updated)
-      setUser(updated)
-      return updated
+      return {
+        id: authUser.id,
+        email: authUser.email ?? "",
+        fullName:
+          profile?.full_name ??
+          (authUser.user_metadata?.full_name as string) ??
+          "",
+        role: (profile?.role as UserRole) ?? "admin",
+        onboarded: profile?.onboarded ?? false,
+        organization,
+        createdAt: authUser.created_at,
+      }
     },
-    []
+    [supabase]
   )
 
-  const signOut = React.useCallback(() => {
-    persist(null)
-    setUser(null)
+  const refresh = React.useCallback(async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    const next = await buildUser(session)
+    setUser(next)
+    return next
+  }, [supabase, buildUser])
+
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      setPendingEmail(window.sessionStorage.getItem(PENDING_EMAIL_KEY))
+    }
+
+    let active = true
+    refresh().finally(() => {
+      if (active) setLoading(false)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const next = await buildUser(session)
+      if (active) setUser(next)
+    })
+
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
+  }, [supabase, refresh, buildUser])
+
+  const setPending = React.useCallback((email: string | null) => {
+    setPendingEmail(email)
+    if (typeof window === "undefined") return
+    if (email) window.sessionStorage.setItem(PENDING_EMAIL_KEY, email)
+    else window.sessionStorage.removeItem(PENDING_EMAIL_KEY)
   }, [])
 
+  const signUp = React.useCallback(
+    async (input: SignUpInput) => {
+      const { data, error } = await supabase.auth.signUp({
+        email: input.email,
+        password: input.password,
+        options: {
+          data: { full_name: input.fullName, role: input.role },
+        },
+      })
+      if (error) throw error
+      // If email confirmation is disabled, Supabase returns a session immediately.
+      if (data.session) {
+        setPending(null)
+        await refresh()
+        return { needsVerification: false }
+      }
+      setPending(input.email)
+      return { needsVerification: true }
+    },
+    [supabase, setPending, refresh]
+  )
+
+  const verifyEmail = React.useCallback(
+    async (code: string) => {
+      if (!pendingEmail) throw new Error("No email pending verification")
+      const { error } = await supabase.auth.verifyOtp({
+        email: pendingEmail,
+        token: code,
+        type: "signup",
+      })
+      if (error) throw error
+      setPending(null)
+      await refresh()
+    },
+    [supabase, pendingEmail, setPending, refresh]
+  )
+
+  const resendCode = React.useCallback(async () => {
+    if (!pendingEmail) throw new Error("No email pending verification")
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: pendingEmail,
+    })
+    if (error) throw error
+  }, [supabase, pendingEmail])
+
+  const signIn = React.useCallback(
+    async (input: SignInInput) => {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: input.email,
+        password: input.password,
+      })
+      if (error) throw error
+      const next = await refresh()
+      if (!next) throw new Error("Could not load your account")
+      return next
+    },
+    [supabase, refresh]
+  )
+
+  const completeOnboarding = React.useCallback(
+    async (organization: Organization, invites: string[] = []) => {
+      await completeOnboardingAction({ organization, invites })
+      const next = await refresh()
+      if (!next) throw new Error("Could not load your account")
+      return next
+    },
+    [refresh]
+  )
+
+  const completeWorkerOnboarding = React.useCallback(async () => {
+    await completeWorkerOnboardingAction()
+    const next = await refresh()
+    if (!next) throw new Error("Could not load your account")
+    return next
+  }, [refresh])
+
+  const signOut = React.useCallback(async () => {
+    await supabase.auth.signOut()
+    setPending(null)
+    setUser(null)
+  }, [supabase, setPending])
+
   const value = React.useMemo(
-    () => ({ user, loading, signIn, signUp, signOut, completeOnboarding }),
-    [user, loading, signIn, signUp, signOut, completeOnboarding]
+    () => ({
+      user,
+      loading,
+      pendingEmail,
+      signUp,
+      signIn,
+      verifyEmail,
+      resendCode,
+      completeOnboarding,
+      completeWorkerOnboarding,
+      signOut,
+      refresh,
+    }),
+    [
+      user,
+      loading,
+      pendingEmail,
+      signUp,
+      signIn,
+      verifyEmail,
+      resendCode,
+      completeOnboarding,
+      completeWorkerOnboarding,
+      signOut,
+      refresh,
+    ]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -37,6 +37,14 @@ export const metadata: Metadata = {
     "Theraptly helps healthcare organizations train, educate, and keep their staff compliant with structured learning built for healthcare requirements.",
 };
 
+/**
+ * Every screen reads auth state from Supabase (via AuthProvider → useAuth)
+ * and most also touch the URL or localStorage on first paint. None of that
+ * is statically prerenderable, so we opt the whole app out of build-time
+ * static generation.
+ */
+export const dynamic = "force-dynamic"
+
 export default function RootLayout({
   children,
 }: Readonly<{

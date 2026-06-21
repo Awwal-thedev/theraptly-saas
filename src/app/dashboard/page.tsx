@@ -20,7 +20,6 @@ import { documents as docsSeed } from "@/lib/documents"
 import { staff as staffSeed } from "@/lib/staff"
 import { AppShell } from "@/components/app/app-shell"
 import { PerformanceChart, TrainingCoverage } from "@/components/dashboard/charts"
-import { CourseReadyBanner } from "@/components/dashboard/course-ready-banner"
 import { DashboardEmptyState } from "@/components/dashboard/empty-state"
 import { MyCourses } from "@/components/dashboard/my-courses"
 import { PrebuiltCourses } from "@/components/dashboard/prebuilt-courses"
@@ -120,10 +119,6 @@ export default function DashboardPage() {
 
   return (
     <AppShell breadcrumb={[{ label: "Home", href: "/dashboard" }, { label: "Training" }]}>
-      <div className="mb-4">
-        <CourseReadyBanner />
-      </div>
-
       {showEmptyState ? (
         <DashboardEmptyState />
       ) : (

@@ -34,6 +34,7 @@ import {
 import { useAuth } from "@/lib/auth/auth-context"
 import { cn } from "@/lib/utils"
 import { Logo, LogoMark } from "@/components/brand/logo"
+import { CourseReadyBanner } from "@/components/dashboard/course-ready-banner"
 import { Splash } from "@/components/brand/splash"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
@@ -396,6 +397,9 @@ export function AppShell({
           onOpenMobile={() => setMobileOpen(true)}
         />
         {!user.onboarded && <OnboardingReminder />}
+        <div className="px-5 pt-4 sm:px-8 empty:hidden">
+          <CourseReadyBanner />
+        </div>
         <main className="flex-1 overflow-y-auto px-5 py-6 sm:px-8">
           {children}
         </main>

@@ -35,7 +35,11 @@ import {
 } from "@/lib/course-content"
 import { useAuth } from "@/lib/auth/auth-context"
 import { appendCourse } from "@/lib/client-store"
-import { readPending, writePending } from "@/lib/pending-course"
+import {
+  clearPending,
+  readPending,
+  writePending,
+} from "@/lib/pending-course"
 import { DatePicker } from "@/components/courses/date-picker"
 import { ResultModal } from "@/components/courses/result-modal"
 import { TimePicker } from "@/components/courses/time-picker"
@@ -403,16 +407,9 @@ export default function NewCoursePage() {
         date,
         status: "Active",
       })
-      // Surface a "Course published" notification on the dashboard until the
-      // user dismisses it. Same store as the in-flight tracker, different
-      // status — banner picks which UI to render off `published`.
-      writePending({
-        id: slug,
-        title: details.title,
-        startedAt: Date.now(),
-        durationMs: 0,
-        published: true,
-      })
+      // User reviewed AND published the course end-to-end — the dashboard
+      // "ready for review" banner has served its purpose, so clear it.
+      clearPending()
     }
     setPublishStatus(forceError ? "error" : "success")
   }

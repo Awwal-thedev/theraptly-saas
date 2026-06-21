@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"C:\\\\Users\\\\Hp\\\\.claude\\\\projects\\\\C--Users-Hp-Desktop-MY-PROJECTS-THERAPTLY-theraptly-saas\\\\memory\")",
+      "Bash(echo \"- [Theraptly product]\\(theraptly-product.md\\) — it's a healthcare staff training & compliance LMS, NOT a therapy app\")",
+      "Bash(echo \"- [Frontend stack]\\(theraptly-frontend-stack.md\\) — Next.js + shadcn/ui + Tailwind + mock auth layer\")",
+      "Bash(npm --version)",
+      "Bash(npx --yes create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --turbopack --use-npm --no-git --yes)"
+    ]
+  }
+}

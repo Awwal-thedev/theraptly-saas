@@ -9,6 +9,8 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   Clock,
   CloudUpload,
@@ -1556,6 +1558,31 @@ function ReviewCourseStep({ title }: { title: string }) {
             ) : (
               <ReviewSlide index={slideIndex} />
             )}
+
+            {/* Prev / Next stepper — moves through the active tab's items */}
+            <ReviewNav
+              tab={tab}
+              index={tab === "Notes" ? noteIndex : slideIndex}
+              total={
+                tab === "Notes"
+                  ? COURSE_LECTURES.length
+                  : COURSE_SLIDES.length
+              }
+              onPrev={() =>
+                tab === "Notes"
+                  ? setNoteIndex((i) => Math.max(0, i - 1))
+                  : setSlideIndex((i) => Math.max(0, i - 1))
+              }
+              onNext={() =>
+                tab === "Notes"
+                  ? setNoteIndex((i) =>
+                      Math.min(COURSE_LECTURES.length - 1, i + 1)
+                    )
+                  : setSlideIndex((i) =>
+                      Math.min(COURSE_SLIDES.length - 1, i + 1)
+                    )
+              }
+            />
           </div>
 
           <div className="rounded-2xl border border-[#eceef2] bg-white p-6 sm:p-8">
@@ -1753,6 +1780,47 @@ function ReviewSlide({ index }: { index: number }) {
       <p className="font-inter text-right text-[12px] text-[#667085]">
         Slide {index + 1} of {COURSE_SLIDES.length}
       </p>
+    </div>
+  )
+}
+
+function ReviewNav({
+  tab,
+  index,
+  total,
+  onPrev,
+  onNext,
+}: {
+  tab: "Notes" | "Slides"
+  index: number
+  total: number
+  onPrev: () => void
+  onNext: () => void
+}) {
+  const isFirst = index === 0
+  const isLast = index === total - 1
+  const noun = tab === "Notes" ? "Article" : "Slide"
+  return (
+    <div className="mt-5 flex items-center justify-between gap-3 border-t border-[#f0f2f5] pt-4">
+      <button
+        type="button"
+        onClick={onPrev}
+        disabled={isFirst}
+        className="font-inter flex items-center gap-1.5 rounded-xl border border-[#e4e7ec] px-4 py-2 text-[13px] font-semibold text-[#475367] transition-colors hover:bg-[#f9fafb] disabled:cursor-not-allowed disabled:opacity-40 sm:text-[14px]"
+      >
+        <ChevronLeft className="size-4" /> Previous
+      </button>
+      <p className="font-inter text-[12px] text-[#667085] sm:text-[13px]">
+        {noun} {index + 1} of {total}
+      </p>
+      <button
+        type="button"
+        onClick={onNext}
+        disabled={isLast}
+        className="font-inter flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-40 sm:text-[14px]"
+      >
+        Next <ChevronRight className="size-4" />
+      </button>
     </div>
   )
 }

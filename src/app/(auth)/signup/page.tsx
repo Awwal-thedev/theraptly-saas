@@ -5,11 +5,22 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Building2, Check, Loader2, Mail, Square, UserRound } from "lucide-react"
+import {
+  Building2,
+  Check,
+  Loader2,
+  Mail,
+  PlusCircle,
+  Square,
+  Trash2,
+  UserRound,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import { signUpSchema, passwordRules, type SignUpValues } from "@/lib/validations"
 import { useAuth } from "@/lib/auth/auth-context"
+import type { OrgType } from "@/lib/auth/types"
+import { ORG_TYPE_LABELS, setFacilities, type Facility } from "@/lib/facilities"
 import { cn } from "@/lib/utils"
 import { AuthShell } from "@/components/auth/auth-shell"
 import {
@@ -22,6 +33,19 @@ import {
 import { Logo } from "@/components/brand/logo"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+const FACILITY_TYPES = (Object.keys(ORG_TYPE_LABELS) as OrgType[]).map(
+  (value) => ({ value, label: ORG_TYPE_LABELS[value] })
+)
+
+type DraftFacility = { name: string; type: OrgType | "" }
 
 type RoleChoice = "admin" | "staff"
 
@@ -34,9 +58,26 @@ export default function SignupPage() {
   const { signUp } = useAuth()
   const router = useRouter()
 
-  const [step, setStep] = useState<0 | 1>(0)
+  const [step, setStep] = useState<0 | 1 | 2>(0)
   const [role, setRole] = useState<RoleChoice>("admin")
   const [submitting, setSubmitting] = useState(false)
+  const [facilities, setFacilitiesState] = useState<DraftFacility[]>([
+    { name: "", type: "" },
+  ])
+
+  const facilitiesValid = facilities.every((f) => f.name.trim() && f.type)
+
+  function updateFacility(index: number, patch: Partial<DraftFacility>) {
+    setFacilitiesState((list) =>
+      list.map((f, i) => (i === index ? { ...f, ...patch } : f))
+    )
+  }
+  function addFacilityRow() {
+    setFacilitiesState((list) => [...list, { name: "", type: "" }])
+  }
+  function removeFacilityRow(index: number) {
+    setFacilitiesState((list) => list.filter((_, i) => i !== index))
+  }
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -65,6 +106,12 @@ export default function SignupPage() {
     setStep(1)
   }
 
+  /** Move past role selection: admins set up facilities, workers finish now. */
+  function onRoleContinue() {
+    if (role === "admin") setStep(2)
+    else finishSignUp()
+  }
+
   async function finishSignUp() {
     const values = form.getValues()
     setSubmitting(true)
@@ -75,6 +122,17 @@ export default function SignupPage() {
         password: values.password,
         role,
       })
+      // Persist the facilities the admin just created so they appear in the
+      // workspace + switcher after onboarding.
+      if (role === "admin") {
+        setFacilities(
+          facilities.map<Facility>((f) => ({
+            id: crypto.randomUUID(),
+            name: f.name.trim(),
+            type: (f.type || "other") as OrgType,
+          }))
+        )
+      }
       if (needsVerification) {
         toast.success("Account created — check your email for a code")
         router.replace("/verify-email")
@@ -89,7 +147,7 @@ export default function SignupPage() {
   }
 
   return (
-    <AuthShell>
+    <AuthShell fullWidth={step === 2}>
       {step === 0 ? (
         /* ── Step 0: Account details ── */
         <form
@@ -237,7 +295,7 @@ export default function SignupPage() {
             </Link>
           </div>
         </form>
-      ) : (
+      ) : step === 1 ? (
         /* ── Step 1: Role selection ── */
         <div className="flex flex-col gap-10">
           <div className="flex flex-col gap-5">
@@ -312,9 +370,122 @@ export default function SignupPage() {
               </button>
               <Button
                 type="button"
-                onClick={finishSignUp}
+                onClick={onRoleContinue}
                 disabled={submitting}
                 className="h-12 flex-1 rounded-xl text-base font-semibold hover:bg-brand-hover"
+              >
+                {submitting && <Loader2 className="animate-spin" />}
+                {role === "admin"
+                  ? "Continue"
+                  : submitting
+                    ? "Creating account…"
+                    : "Create Account"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* ── Step 2: Create facilities (admin, full-screen) ── */
+        <div className="flex flex-col gap-10">
+          <AuthHeader
+            title="Set up your facilities"
+            subtitle="Add the facilities you manage. You can start with one and add more anytime."
+          />
+
+          <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-4">
+              {facilities.map((facility, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col gap-5 rounded-2xl border border-[#eceef2] bg-card p-5 sm:p-6"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[15px] font-semibold text-foreground">
+                      Facility {i + 1}
+                    </span>
+                    {facilities.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeFacilityRow(i)}
+                        className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[14px] font-medium text-[#d92d20] transition-colors hover:bg-[#fef3f2]"
+                      >
+                        <Trash2 className="size-4" />
+                        Remove
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <AuthField
+                      id={`facility-name-${i}`}
+                      label="Facility name"
+                      placeholder="e.g. Sunrise Behavioral Health"
+                      value={facility.name}
+                      onChange={(e) =>
+                        updateFacility(i, { name: e.target.value })
+                      }
+                    />
+
+                    <div className="flex w-full flex-col gap-1.5">
+                      <label
+                        htmlFor={`facility-type-${i}`}
+                        className="text-[15px] font-medium text-foreground"
+                      >
+                        Facility type
+                      </label>
+                      <Select
+                        value={facility.type || undefined}
+                        onValueChange={(v) =>
+                          updateFacility(i, { type: (v ?? "") as OrgType })
+                        }
+                      >
+                        <SelectTrigger
+                          id={`facility-type-${i}`}
+                          className="!h-[60px] rounded-xl border-input px-4 text-[15px]"
+                        >
+                          <SelectValue placeholder="Select facility type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {FACILITY_TYPES.map((t) => (
+                            <SelectItem
+                              key={t.value}
+                              value={t.value}
+                              className="text-[15px]"
+                            >
+                              {t.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={addFacilityRow}
+                className="flex items-center justify-center gap-2 rounded-2xl border border-dashed border-[#cdd3dd] py-4 text-[15px] font-semibold text-primary transition-colors hover:border-primary hover:bg-[#f5f6ff]"
+              >
+                <PlusCircle className="size-5" />
+                Add another facility
+              </button>
+            </div>
+
+            <div className="flex w-full items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                disabled={submitting}
+                className="h-12 flex-1 rounded-xl border border-[#e4e7ec] text-[15px] font-semibold text-[#475367] transition-colors hover:bg-[#f9fafb] disabled:opacity-50"
+              >
+                Back
+              </button>
+              <Button
+                type="button"
+                onClick={finishSignUp}
+                disabled={submitting || !facilitiesValid}
+                className="h-12 flex-1 rounded-xl text-base font-semibold hover:bg-brand-hover disabled:bg-[#e4e7ec] disabled:text-[#98a2b3] disabled:opacity-100"
               >
                 {submitting && <Loader2 className="animate-spin" />}
                 {submitting ? "Creating account…" : "Create Account"}

@@ -7,6 +7,8 @@ import type { ComponentType, SVGProps } from "react"
 import {
   Bell,
   ChevronDown,
+  GraduationCap,
+  LayoutGrid,
   LogOut,
   Menu,
   PanelLeftClose,
@@ -15,25 +17,41 @@ import {
   X,
 } from "lucide-react"
 import {
+  AcademicCapIcon as LearnOutline,
   BookOpenIcon as CoursesOutline,
+  Cog6ToothIcon as SettingsOutline,
   CreditCardIcon as BillingOutline,
   DocumentTextIcon as DocOutline,
   LifebuoyIcon as HelpOutline,
   Squares2X2Icon as DashOutline,
+  TrophyIcon as CertOutline,
   UsersIcon as StaffOutline,
 } from "@heroicons/react/24/outline"
 import {
+  AcademicCapIcon as LearnSolid,
   BookOpenIcon as CoursesSolid,
+  Cog6ToothIcon as SettingsSolid,
   CreditCardIcon as BillingSolid,
   DocumentTextIcon as DocSolid,
   LifebuoyIcon as HelpSolid,
   Squares2X2Icon as DashSolid,
+  TrophyIcon as CertSolid,
   UsersIcon as StaffSolid,
 } from "@heroicons/react/24/solid"
 
 import { useAuth } from "@/lib/auth/auth-context"
+import { useAppView } from "@/lib/auth/view-context"
+import {
+  PERMISSIONS,
+  SYSTEM_ROLE_LABELS,
+  WORKER_ROLE_LABELS,
+  type NavKey,
+  type SystemRole,
+  type WorkerRole,
+} from "@/lib/auth/roles"
 import { cn } from "@/lib/utils"
 import { Logo, LogoMark } from "@/components/brand/logo"
+import { FacilitySwitcher } from "@/components/app/facility-switcher"
 import { CourseReadyBanner } from "@/components/dashboard/course-ready-banner"
 import { Splash } from "@/components/brand/splash"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -42,6 +60,8 @@ export type Crumb = { label: string; href?: string }
 
 type IconType = ComponentType<SVGProps<SVGSVGElement>>
 type NavItem = {
+  /** Permission key — undefined items are always shown (learner view). */
+  key?: NavKey
   label: string
   href: string
   outline: IconType
@@ -49,29 +69,58 @@ type NavItem = {
 }
 type NavSection = { heading: string; items: NavItem[] }
 
-const NAV: NavSection[] = [
+/** Management view — gated per system role via PERMISSIONS[role].nav. */
+const MANAGEMENT_NAV: NavSection[] = [
   {
     heading: "Main Menu",
     items: [
-      { label: "Dashboard", href: "/dashboard", outline: DashOutline, solid: DashSolid },
-      { label: "Documents", href: "/documents", outline: DocOutline, solid: DocSolid },
-      { label: "Courses", href: "/courses", outline: CoursesOutline, solid: CoursesSolid },
+      { key: "dashboard", label: "Dashboard", href: "/dashboard", outline: DashOutline, solid: DashSolid },
+      { key: "documents", label: "Documents", href: "/documents", outline: DocOutline, solid: DocSolid },
+      { key: "courses", label: "Courses", href: "/courses", outline: CoursesOutline, solid: CoursesSolid },
     ],
   },
   {
     heading: "Performance",
     items: [
-      { label: "Staff Management", href: "/staff", outline: StaffOutline, solid: StaffSolid },
+      { key: "staff", label: "Staff Management", href: "/staff", outline: StaffOutline, solid: StaffSolid },
     ],
   },
   {
     heading: "Settings",
     items: [
-      { label: "Billing", href: "/billing", outline: BillingOutline, solid: BillingSolid },
+      { key: "settings", label: "Settings", href: "/settings", outline: SettingsOutline, solid: SettingsSolid },
+      { key: "billing", label: "Billing", href: "/billing", outline: BillingOutline, solid: BillingSolid },
+      { key: "help", label: "Help Center", href: "/help", outline: HelpOutline, solid: HelpSolid },
+    ],
+  },
+]
+
+/** Learner view — identical for every account, elevated or not. */
+const LEARNER_NAV: NavSection[] = [
+  {
+    heading: "Learning",
+    items: [
+      { label: "My Learning", href: "/dashboard", outline: LearnOutline, solid: LearnSolid },
+      { label: "My Certificates", href: "/certificates", outline: CertOutline, solid: CertSolid },
+    ],
+  },
+  {
+    heading: "Settings",
+    items: [
       { label: "Help Center", href: "/help", outline: HelpOutline, solid: HelpSolid },
     ],
   },
 ]
+
+/** Resolve the nav sections for the active (role, view), dropping empties. */
+function navFor(systemRole: SystemRole, view: "management" | "learner"): NavSection[] {
+  if (view === "learner") return LEARNER_NAV
+  const allowed = PERMISSIONS[systemRole].nav
+  return MANAGEMENT_NAV.map((section) => ({
+    ...section,
+    items: section.items.filter((i) => !i.key || allowed.includes(i.key)),
+  })).filter((section) => section.items.length > 0)
+}
 
 function SidebarBody({
   collapsed,
@@ -81,6 +130,8 @@ function SidebarBody({
   onNavigate?: () => void
 }) {
   const pathname = usePathname()
+  const { systemRole, view, elevated } = useAppView()
+  const sections = navFor(systemRole, view)
   return (
     <>
       <div
@@ -91,8 +142,13 @@ function SidebarBody({
       >
         {collapsed ? <LogoMark href="/dashboard" /> : <Logo href="/dashboard" />}
       </div>
+      {elevated && (
+        <div className={cn("pb-1", collapsed ? "px-2" : "px-3")}>
+          <ViewSwitcher collapsed={collapsed} />
+        </div>
+      )}
       <nav className="flex-1 space-y-6 px-3 py-2">
-        {NAV.map((section) => (
+        {sections.map((section) => (
           <div key={section.heading} className="space-y-1">
             {collapsed ? (
               <div className="mx-3 mb-2 h-px bg-[#f0f2f5]" />
@@ -135,7 +191,133 @@ function SidebarBody({
           </div>
         ))}
       </nav>
+      <DevRoleSimulator collapsed={collapsed} />
+      <div className="border-t border-[#f0f2f5] py-3">
+        <FacilitySwitcher collapsed={collapsed} />
+      </div>
     </>
+  )
+}
+
+function ViewSwitcher({ collapsed }: { collapsed: boolean }) {
+  const { view, setView } = useAppView()
+
+  if (collapsed) {
+    const next = view === "management" ? "learner" : "management"
+    const Icon = view === "management" ? GraduationCap : LayoutGrid
+    return (
+      <button
+        type="button"
+        onClick={() => setView(next)}
+        title={`Switch to ${next === "management" ? "Management" : "Learner"} view`}
+        aria-label={`Switch to ${next === "management" ? "Management" : "Learner"} view`}
+        className="grid size-10 w-full place-items-center rounded-xl bg-[#f3f4f6] text-[#475367] transition-colors hover:bg-[#eceef2]"
+      >
+        <Icon className="size-5" />
+      </button>
+    )
+  }
+
+  const tabs: { key: "management" | "learner"; label: string; icon: typeof LayoutGrid }[] = [
+    { key: "management", label: "Manage", icon: LayoutGrid },
+    { key: "learner", label: "Learn", icon: GraduationCap },
+  ]
+  return (
+    <div className="flex rounded-xl bg-[#f3f4f6] p-1">
+      {tabs.map(({ key, label, icon: Icon }) => {
+        const active = view === key
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setView(key)}
+            className={cn(
+              "font-inter flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-semibold transition-colors",
+              active
+                ? "bg-white text-[#101928] shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
+                : "text-[#667085] hover:text-foreground"
+            )}
+          >
+            <Icon className="size-4" />
+            {label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/**
+ * DEV-ONLY: preview the app as any system / worker role without a separate
+ * login. Returns null entirely in production builds.
+ */
+function DevRoleSimulator({ collapsed }: { collapsed: boolean }) {
+  const {
+    isDev,
+    systemRole,
+    simulatedSystemRole,
+    setSimulatedSystemRole,
+    simulatedWorkerRole,
+    setSimulatedWorkerRole,
+  } = useAppView()
+
+  if (!isDev || collapsed) return null
+
+  const SYSTEM_ROLES: SystemRole[] = [
+    "owner",
+    "hr",
+    "clinical_director",
+    "finance",
+    "student",
+    "super_admin",
+  ]
+  const WORKER_ROLES: WorkerRole[] = [
+    "front_desk",
+    "nurse",
+    "doctor",
+    "therapist",
+    "finance",
+    "others",
+  ]
+  const selectCls =
+    "font-inter w-full rounded-lg border border-[#e4e7ec] bg-white px-2.5 py-1.5 text-[12px] text-[#344054] outline-none focus:border-primary"
+
+  return (
+    <div className="m-3 mt-0 space-y-2 rounded-xl border border-dashed border-[#e4e7ec] bg-[#fafafa] p-3">
+      <p className="font-inter text-[10px] font-bold uppercase tracking-[0.08em] text-[#98a2b3]">
+        Dev · preview as
+      </p>
+      <select
+        aria-label="Simulate system role"
+        className={selectCls}
+        value={simulatedSystemRole ?? ""}
+        onChange={(e) =>
+          setSimulatedSystemRole((e.target.value || null) as SystemRole | null)
+        }
+      >
+        <option value="">Real role ({SYSTEM_ROLE_LABELS[systemRole]})</option>
+        {SYSTEM_ROLES.map((r) => (
+          <option key={r} value={r}>
+            {SYSTEM_ROLE_LABELS[r]}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label="Simulate worker role"
+        className={selectCls}
+        value={simulatedWorkerRole ?? ""}
+        onChange={(e) =>
+          setSimulatedWorkerRole((e.target.value || null) as WorkerRole | null)
+        }
+      >
+        <option value="">Worker: Others</option>
+        {WORKER_ROLES.map((r) => (
+          <option key={r} value={r}>
+            Worker: {WORKER_ROLE_LABELS[r]}
+          </option>
+        ))}
+      </select>
+    </div>
   )
 }
 

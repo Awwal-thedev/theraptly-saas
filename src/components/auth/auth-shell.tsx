@@ -151,21 +151,37 @@ export function AuthShowcase({
 interface AuthShellProps {
   children: React.ReactNode
   slides?: AuthSlide[]
+  /** Drop the right-hand showcase and use the full width (e.g. facility setup). */
+  fullWidth?: boolean
 }
 
 /** Two-column auth layout: equal-width form card (left) and image showcase (right). */
-export function AuthShell({ children, slides }: AuthShellProps) {
+export function AuthShell({ children, slides, fullWidth = false }: AuthShellProps) {
   return (
-    <div className="grid min-h-svh grid-cols-1 gap-4 bg-background p-3 sm:p-4 lg:grid-cols-2">
+    <div
+      className={cn(
+        "grid min-h-svh grid-cols-1 gap-4 bg-background p-3 sm:p-4",
+        !fullWidth && "lg:grid-cols-2"
+      )}
+    >
       <div className="flex flex-col justify-center rounded-[20px] bg-card px-5 py-10 sm:px-10 sm:py-12 lg:px-16 xl:px-20 2xl:px-24">
-        <div className="mx-auto w-full max-w-[620px]">{children}</div>
+        <div
+          className={cn(
+            "mx-auto w-full",
+            fullWidth ? "max-w-[760px]" : "max-w-[620px]"
+          )}
+        >
+          {children}
+        </div>
       </div>
-      <div className="hidden lg:block">
-        <AuthShowcase
-          slides={slides}
-          className="sticky top-4 h-[calc(100svh_-_2rem)]"
-        />
-      </div>
+      {!fullWidth && (
+        <div className="hidden lg:block">
+          <AuthShowcase
+            slides={slides}
+            className="sticky top-4 h-[calc(100svh_-_2rem)]"
+          />
+        </div>
+      )}
     </div>
   )
 }

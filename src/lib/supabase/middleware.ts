@@ -14,6 +14,13 @@ const PROTECTED_PREFIXES = [
  * handled client-side where the profile is available.
  */
 export async function updateSession(request: NextRequest) {
+  // DEV ONLY: skip Supabase auth gating entirely in development so the app is
+  // easy to test while building — no login required. Re-enable real gating by
+  // removing this block (or guarding it behind a flag). Dead in production.
+  if (process.env.NODE_ENV !== "production") {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(

@@ -31,6 +31,37 @@ import type {
 
 const PENDING_EMAIL_KEY = "theraptly:pending-email"
 
+/**
+ * DEV ONLY. In development, AuthProvider injects a mock signed-in user and
+ * skips Supabase entirely — so the app is easy to test while building, no
+ * login required. Pair with the dev auth bypass in lib/supabase/middleware.ts.
+ *
+ * To exercise the REAL auth flow again, set DEV_BYPASS_AUTH to false (and
+ * restore the gating block in middleware.ts). Always off in production.
+ *
+ * Use the in-app dev role simulator (sidebar footer) or /dev to preview a
+ * specific system / worker role on top of this mock identity.
+ */
+export const DEV_PREVIEW_KEY = "theraptly:dev-preview"
+const IS_DEV = process.env.NODE_ENV !== "production"
+const DEV_BYPASS_AUTH = IS_DEV
+
+const DEV_PREVIEW_USER: User = {
+  id: "dev-preview-user",
+  fullName: "Jane Doe",
+  email: "preview@theraptly.dev",
+  role: "admin",
+  onboarded: true,
+  organization: {
+    name: "Demo Facility",
+    type: "behavioral_health",
+    teamSize: "11-50",
+    frameworks: ["HIPAA", "OSHA"],
+  },
+  createdAt: "2026-01-01T00:00:00.000Z",
+}
+
+
 interface AuthContextValue {
   user: User | null
   loading: boolean
@@ -130,6 +161,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       setPendingEmail(window.sessionStorage.getItem(PENDING_EMAIL_KEY))
+    }
+
+    // Dev: skip Supabase and render as a mock signed-in user (no login).
+    if (DEV_BYPASS_AUTH) {
+      setUser(DEV_PREVIEW_USER)
+      setLoading(false)
+      return
     }
 
     let active = true
@@ -235,6 +273,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [refresh])
 
   const signOut = React.useCallback(async () => {
+    if (IS_DEV && typeof window !== "undefined") {
+      window.localStorage.removeItem(DEV_PREVIEW_KEY)
+      document.cookie = "theraptly-dev-preview=; path=/; max-age=0"
+    }
     await supabase.auth.signOut()
     setPending(null)
     setUser(null)

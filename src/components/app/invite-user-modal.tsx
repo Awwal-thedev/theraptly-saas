@@ -13,9 +13,7 @@ import {
   PERMISSIONS,
   SYSTEM_ROLE_LABELS,
   SYSTEM_ROLE_SUMMARY,
-  WORKER_ROLE_LABELS,
   type SystemRole,
-  type WorkerRole,
 } from "@/lib/auth/roles"
 import {
   inviteUser,
@@ -38,22 +36,9 @@ const ASSIGNABLE_SYSTEM_ROLES: SystemRole[] = [
   "finance",
   "student",
 ]
-const WORKER_ROLES: WorkerRole[] = [
-  "front_desk",
-  "nurse",
-  "doctor",
-  "therapist",
-  "finance",
-  "others",
-]
-
 const SYSTEM_ROLE_ITEMS = ASSIGNABLE_SYSTEM_ROLES.map((value) => ({
   value,
   label: SYSTEM_ROLE_LABELS[value],
-}))
-const WORKER_ROLE_ITEMS = WORKER_ROLES.map((value) => ({
-  value,
-  label: WORKER_ROLE_LABELS[value],
 }))
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -138,14 +123,12 @@ export function InviteUserModal({
   const isEdit = !!editUser
   const [email, setEmail] = useState("")
   const [systemRole, setSystemRole] = useState<SystemRole | "">("")
-  const [workerRole, setWorkerRole] = useState<WorkerRole | "">("")
 
   // Hydrate fields whenever the modal opens (invite = blank, edit = current).
   useEffect(() => {
     if (!open) return
     setEmail(editUser?.email ?? "")
     setSystemRole(editUser?.systemRole ?? "")
-    setWorkerRole(editUser?.workerRole ?? "")
   }, [open, editUser])
 
   useEffect(() => {
@@ -163,7 +146,7 @@ export function InviteUserModal({
   const roleChanged = isEdit && !!systemRole && systemRole !== editUser?.systemRole
   const valid = isEdit
     ? roleChanged
-    : emailValid && !!systemRole && !!workerRole
+    : emailValid && !!systemRole
 
   const delta =
     roleChanged && editUser
@@ -185,7 +168,8 @@ export function InviteUserModal({
         name: nameFromEmail(trimmed),
         email: trimmed,
         systemRole: systemRole as SystemRole,
-        workerRole: workerRole as WorkerRole,
+        // Worker role is no longer set at invite — course assignment is manual.
+        workerRole: "others",
         status: "invited",
         lastActive: "Invited just now",
       })
@@ -312,42 +296,6 @@ export function InviteUserModal({
             </div>
           )}
 
-          {/* Worker role — editable on invite, locked (preserved) on promotion */}
-          <div>
-            <label className={labelCls}>Worker role (training track)</label>
-            {isEdit ? (
-              <div className="mt-2 flex h-12 items-center justify-between rounded-[12px] border-[1.5px] border-[#e5e7ea] bg-[#f9fafb] px-4">
-                <span className="font-inter text-[15px] text-[#475367]">
-                  {workerRole ? WORKER_ROLE_LABELS[workerRole] : "—"}
-                </span>
-                <span className="font-inter text-[12px] text-[#98a2b3]">
-                  Unchanged
-                </span>
-              </div>
-            ) : (
-              <Select
-                items={WORKER_ROLE_ITEMS}
-                value={workerRole}
-                onValueChange={(v) => setWorkerRole((v ?? "") as WorkerRole)}
-              >
-                <SelectTrigger className="mt-2 !h-12 w-full rounded-[12px] border-[#e5e7ea] px-4 text-[15px]">
-                  <SelectValue placeholder="Select a worker role" />
-                </SelectTrigger>
-                <SelectContent>
-                  {WORKER_ROLES.map((r) => (
-                    <SelectItem key={r} value={r} className="text-[15px]">
-                      {WORKER_ROLE_LABELS[r]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            <p className="font-inter mt-2 text-[12px] text-[#98a2b3]">
-              {isEdit
-                ? "Promotion keeps their training track and completed courses intact."
-                : "Determines which mandatory courses are auto-assigned."}
-            </p>
-          </div>
         </div>
 
         <div className="mt-7 flex items-center gap-3">

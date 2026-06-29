@@ -5,39 +5,22 @@ import Link from "next/link"
 import { toast } from "sonner"
 import {
   Ban,
-  BookOpen,
   Check,
-  Eye,
-  EyeOff,
-  LogOut,
-  Monitor,
   MoreVertical,
   Pencil,
-  Plus,
   RotateCcw,
   ShieldX,
-  Smartphone,
-  Square,
   UserPlus,
-  X,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { passwordRules } from "@/lib/validations"
 import { useAppView } from "@/lib/auth/view-context"
-import { useStoredCourses } from "@/lib/client-store"
-import { courses as coursesSeed, type Course } from "@/lib/courses"
 import type { OrgType } from "@/lib/auth/types"
 import {
   ORG_TYPE_LABELS,
   updateFacility,
   useFacilities,
 } from "@/lib/facilities"
-import {
-  addCourseToTrack,
-  removeCourseFromTrack,
-  useTrainingTracks,
-} from "@/lib/training-tracks"
 import {
   ASSIGNABLE_ROLE_ORDER,
   CAPABILITY_LABELS,
@@ -47,9 +30,6 @@ import {
   NAV_ORDER,
   PERMISSIONS,
   SYSTEM_ROLE_LABELS,
-  WORKER_ROLE_FOCUS,
-  WORKER_ROLE_LABELS,
-  WORKER_ROLE_ORDER,
   type SystemRole,
 } from "@/lib/auth/roles"
 import {
@@ -76,14 +56,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-type TabKey = "users" | "roles" | "tracks" | "facility" | "security"
+type TabKey = "users" | "roles" | "facility"
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: "users", label: "Users & Permissions" },
   { key: "roles", label: "Roles" },
-  { key: "tracks", label: "Training Tracks" },
   { key: "facility", label: "Facility" },
-  { key: "security", label: "Security" },
 ]
 
 /* ---------------- badges ---------------- */
@@ -106,14 +84,6 @@ function SystemRoleBadge({ role }: { role: SystemRole }) {
       )}
     >
       {SYSTEM_ROLE_LABELS[role]}
-    </span>
-  )
-}
-
-function WorkerRoleChip({ role }: { role: FacilityUser["workerRole"] }) {
-  return (
-    <span className="font-inter inline-flex items-center rounded-md bg-[#f2f4f7] px-2 py-0.5 text-[13px] font-medium text-[#475467]">
-      {WORKER_ROLE_LABELS[role]}
     </span>
   )
 }
@@ -217,8 +187,7 @@ function UsersTab() {
     (u) =>
       u.name.toLowerCase().includes(q) ||
       u.email.toLowerCase().includes(q) ||
-      SYSTEM_ROLE_LABELS[u.systemRole].toLowerCase().includes(q) ||
-      WORKER_ROLE_LABELS[u.workerRole].toLowerCase().includes(q)
+      SYSTEM_ROLE_LABELS[u.systemRole].toLowerCase().includes(q)
   )
 
   return (
@@ -259,7 +228,6 @@ function UsersTab() {
               <tr className="border-b border-[#f0f2f5] bg-[#f9fafb] text-[14px] font-medium text-[#667085]">
                 <th className="px-6 py-3 font-medium">Name</th>
                 <th className="px-6 py-3 font-medium">System role</th>
-                <th className="px-6 py-3 font-medium">Worker role</th>
                 <th className="px-6 py-3 font-medium">Status</th>
                 <th className="hidden px-6 py-3 font-medium lg:table-cell">
                   Last active
@@ -290,9 +258,6 @@ function UsersTab() {
                     <SystemRoleBadge role={u.systemRole} />
                   </td>
                   <td className="px-6 py-4">
-                    <WorkerRoleChip role={u.workerRole} />
-                  </td>
-                  <td className="px-6 py-4">
                     <StatusBadge status={u.status} />
                   </td>
                   <td className="hidden px-6 py-4 text-[14px] text-[#667085] lg:table-cell">
@@ -306,7 +271,7 @@ function UsersTab() {
               {filtered.length === 0 && (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="px-6 py-12 text-center text-sm text-[#667085]"
                   >
                     No users match “{query}”.
@@ -334,7 +299,6 @@ function UsersTab() {
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2">
                 <SystemRoleBadge role={u.systemRole} />
-                <WorkerRoleChip role={u.workerRole} />
                 <span className="ml-auto">
                   <StatusBadge status={u.status} />
                 </span>
@@ -451,177 +415,6 @@ function RolesTab() {
           Super Admin is a Theraptly-internal role with cross-tenant access and
           isn't assignable here.
         </p>
-      </div>
-
-      {/* Worker roles */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="font-inter text-[18px] font-semibold text-[#101928]">
-            Worker roles — training tracks
-          </h2>
-          <p className="font-inter text-[14px] text-[#667085]">
-            The worker role auto-assigns mandatory courses. It drives training
-            only — it never changes platform access.
-          </p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {WORKER_ROLE_ORDER.map((w) => (
-            <div
-              key={w}
-              className="rounded-xl border border-[#eceef2] bg-white p-4 shadow-[0_1px_2px_rgba(16,24,40,0.04)]"
-            >
-              <p className="font-inter text-[15px] font-semibold text-[#101928]">
-                {WORKER_ROLE_LABELS[w]}
-              </p>
-              <p className="font-inter mt-0.5 text-[13px] text-[#667085]">
-                {WORKER_ROLE_FOCUS[w]}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ---------------- Training tracks tab ---------------- */
-
-function AddCourseMenu({
-  role,
-  available,
-}: {
-  role: (typeof WORKER_ROLE_ORDER)[number]
-  available: Course[]
-}) {
-  if (available.length === 0) {
-    return (
-      <span className="font-inter inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-medium text-[#98a2b3]">
-        <Plus className="size-4" /> All courses added
-      </span>
-    )
-  }
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="font-inter inline-flex items-center gap-2 rounded-lg px-2.5 py-2 text-[13px] font-semibold text-primary outline-none transition-colors hover:bg-[#f5f6ff] data-[popup-open]:bg-[#f5f6ff]">
-        <Plus className="size-4" /> Add course
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64">
-        {available.map((c) => (
-          <DropdownMenuItem
-            key={c.id}
-            onClick={() => addCourseToTrack(role, c.id)}
-            className="gap-2 py-2 text-[14px]"
-          >
-            <BookOpen className="size-4 text-[#98a2b3]" />
-            <span className="truncate">{c.name}</span>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-}
-
-function TrainingTracksTab() {
-  const tracks = useTrainingTracks()
-  const storedCourses = useStoredCourses()
-  const allCourses: Course[] = [...storedCourses, ...coursesSeed]
-  const findCourse = (id: string) => allCourses.find((c) => c.id === id)
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="font-inter text-[18px] font-semibold text-[#101928]">
-          Training tracks
-        </h2>
-        <p className="font-inter text-[14px] text-[#667085]">
-          When you assign someone a worker role, the courses mapped here are
-          automatically assigned to them.
-        </p>
-      </div>
-
-      {allCourses.length === 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#fde68a] bg-[#fffbeb] p-4">
-          <p className="font-inter text-[13px] font-medium text-[#92400e]">
-            You haven't created any courses yet. Create courses to map them to
-            training tracks.
-          </p>
-          <Link
-            href="/courses/new"
-            className="font-inter rounded-lg bg-primary px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-brand-hover"
-          >
-            Create a course
-          </Link>
-        </div>
-      )}
-
-      <div className="space-y-3">
-        {WORKER_ROLE_ORDER.map((role) => {
-          const ids = tracks[role]
-          const assigned = ids
-            .map(findCourse)
-            .filter((c): c is Course => Boolean(c))
-          const available = allCourses.filter((c) => !ids.includes(c.id))
-
-          return (
-            <div
-              key={role}
-              className="rounded-2xl border border-[#eceef2] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.05)]"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-inter text-[15px] font-semibold text-[#101928]">
-                    {WORKER_ROLE_LABELS[role]}
-                  </p>
-                  <p className="font-inter text-[13px] text-[#667085]">
-                    {WORKER_ROLE_FOCUS[role]}
-                  </p>
-                </div>
-                <span className="font-inter shrink-0 rounded-full bg-[#f2f4f7] px-2.5 py-1 text-[12px] font-semibold text-[#475467]">
-                  {assigned.length} course{assigned.length === 1 ? "" : "s"}
-                </span>
-              </div>
-
-              <div className="mt-4 space-y-2">
-                {assigned.length === 0 ? (
-                  <p className="font-inter rounded-lg bg-[#f9fafb] px-3 py-3 text-[13px] text-[#98a2b3]">
-                    No courses assigned to this track yet.
-                  </p>
-                ) : (
-                  assigned.map((c) => (
-                    <div
-                      key={c.id}
-                      className="flex items-center gap-3 rounded-xl border border-[#f0f2f5] px-3 py-2.5"
-                    >
-                      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[#101928] text-white">
-                        <BookOpen className="size-4" />
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-inter truncate text-[14px] font-medium text-[#101928]">
-                          {c.name}
-                        </p>
-                        <p className="font-inter truncate text-[12px] text-[#667085]">
-                          {c.type}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeCourseFromTrack(role, c.id)}
-                        aria-label={`Remove ${c.name} from ${WORKER_ROLE_LABELS[role]}`}
-                        className="grid size-8 shrink-0 place-items-center rounded-lg text-[#98a2b3] transition-colors hover:bg-[#fef3f2] hover:text-[#d92d20]"
-                      >
-                        <X className="size-4" />
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="mt-3">
-                <AddCourseMenu role={role} available={available} />
-              </div>
-            </div>
-          )
-        })}
       </div>
     </div>
   )
@@ -769,326 +562,6 @@ function FacilityTab() {
   )
 }
 
-/* ---------------- Security tab ---------------- */
-
-const FIELD_INPUT =
-  "h-12 w-full rounded-[12px] border-[1.5px] border-field bg-surface text-foreground dark:bg-surface-subtle px-4 text-[14px] outline-none transition-colors placeholder:text-[#979797] focus:border-primary focus:ring-3 focus:ring-primary/15 sm:text-[15px]"
-const FIELD_LABEL = "font-inter text-[13px] font-medium text-[#475367] sm:text-[14px]"
-
-const SECURITY_CARD =
-  "rounded-2xl border border-[#eceef2] bg-white p-5 shadow-[0_1px_2px_rgba(16,24,40,0.05)] sm:p-6"
-
-function PasswordInput({
-  id,
-  label,
-  value,
-  onChange,
-  placeholder,
-}: {
-  id: string
-  label: string
-  value: string
-  onChange: (v: string) => void
-  placeholder: string
-}) {
-  const [show, setShow] = useState(false)
-  return (
-    <div>
-      <label htmlFor={id} className={FIELD_LABEL}>
-        {label}
-      </label>
-      <div className="relative mt-2">
-        <input
-          id={id}
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          autoComplete="off"
-          className={cn(FIELD_INPUT, "pr-11")}
-        />
-        <button
-          type="button"
-          onClick={() => setShow((s) => !s)}
-          aria-label={show ? "Hide password" : "Show password"}
-          className="absolute right-3 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-[#98a2b3] hover:text-[#475367]"
-        >
-          {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-        </button>
-      </div>
-    </div>
-  )
-}
-
-function SecurityToggle({
-  checked,
-  onChange,
-}: {
-  checked: boolean
-  onChange: (v: boolean) => void
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-        checked ? "bg-primary" : "bg-[#e4e7ec]"
-      )}
-    >
-      <span
-        className={cn(
-          "absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-transform",
-          checked ? "translate-x-[22px]" : "translate-x-0.5"
-        )}
-      />
-    </button>
-  )
-}
-
-const AUTO_SIGNOUT_OPTIONS = [
-  { value: "15", label: "After 15 minutes" },
-  { value: "30", label: "After 30 minutes" },
-  { value: "60", label: "After 1 hour" },
-  { value: "never", label: "Never" },
-]
-
-type SessionRow = {
-  id: string
-  device: string
-  location: string
-  lastActive: string
-  current: boolean
-  mobile?: boolean
-}
-
-const INITIAL_SESSIONS: SessionRow[] = [
-  {
-    id: "current",
-    device: "Chrome on Windows",
-    location: "North Carolina, United States",
-    lastActive: "Active now",
-    current: true,
-  },
-  {
-    id: "iphone",
-    device: "Safari on iPhone",
-    location: "North Carolina, United States",
-    lastActive: "2 days ago",
-    current: false,
-    mobile: true,
-  },
-]
-
-function SecurityTab() {
-  const [current, setCurrent] = useState("")
-  const [next, setNext] = useState("")
-  const [confirm, setConfirm] = useState("")
-  const [twoFactor, setTwoFactor] = useState(false)
-  const [autoSignOut, setAutoSignOut] = useState("30")
-  const [sessions, setSessions] = useState<SessionRow[]>(INITIAL_SESSIONS)
-
-  const rulesMet = passwordRules.every((r) => r.test(next))
-  const passwordValid =
-    current.length > 0 && rulesMet && next.length > 0 && next === confirm
-
-  function updatePassword() {
-    if (!passwordValid) return
-    setCurrent("")
-    setNext("")
-    setConfirm("")
-    toast.success("Password updated")
-  }
-
-  function signOutSession(id: string) {
-    setSessions((list) => list.filter((s) => s.id !== id))
-    toast.success("Signed out of that session")
-  }
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="font-inter text-[18px] font-semibold text-[#101928]">
-          Security
-        </h2>
-        <p className="font-inter text-[14px] text-[#667085]">
-          Protect your account and keep facility data safe.
-        </p>
-      </div>
-
-      {/* Password */}
-      <div className={SECURITY_CARD}>
-        <h3 className="font-inter text-[15px] font-semibold text-[#101928]">
-          Password
-        </h3>
-        <p className="font-inter mt-0.5 text-[13px] text-[#667085]">
-          Use a strong password you don't reuse anywhere else.
-        </p>
-
-        <div className="mt-5 grid gap-5 sm:grid-cols-2">
-          <PasswordInput
-            id="current-password"
-            label="Current password"
-            value={current}
-            onChange={setCurrent}
-            placeholder="Enter current password"
-          />
-          <div className="hidden sm:block" />
-          <PasswordInput
-            id="new-password"
-            label="New password"
-            value={next}
-            onChange={setNext}
-            placeholder="Enter new password"
-          />
-          <PasswordInput
-            id="confirm-password"
-            label="Confirm new password"
-            value={confirm}
-            onChange={setConfirm}
-            placeholder="Re-enter new password"
-          />
-        </div>
-
-        {next.length > 0 && (
-          <ul className="mt-4 flex flex-col gap-2">
-            {passwordRules.map((rule) => {
-              const met = rule.test(next)
-              return (
-                <li key={rule.id} className="flex items-center gap-2">
-                  {met ? (
-                    <span className="grid size-4 place-items-center rounded bg-[#12b76a] text-white">
-                      <Check className="size-3" strokeWidth={3} />
-                    </span>
-                  ) : (
-                    <Square className="size-4 text-[#cbd2dc]" />
-                  )}
-                  <span
-                    className={cn(
-                      "font-inter text-[13px]",
-                      met ? "text-[#475367]" : "text-[#98a2b3]"
-                    )}
-                  >
-                    {rule.label}
-                  </span>
-                </li>
-              )
-            })}
-            {confirm.length > 0 && next !== confirm && (
-              <li className="font-inter text-[13px] text-[#d92d20]">
-                Passwords don't match.
-              </li>
-            )}
-          </ul>
-        )}
-
-        <div className="mt-5 flex justify-end">
-          <button
-            type="button"
-            onClick={updatePassword}
-            disabled={!passwordValid}
-            className="font-inter h-11 rounded-xl bg-primary px-5 text-[14px] font-semibold text-white transition-colors hover:bg-brand-hover disabled:bg-[#e4e7ec] disabled:text-[#98a2b3]"
-          >
-            Update password
-          </button>
-        </div>
-      </div>
-
-      {/* Two-factor */}
-      <div className={cn(SECURITY_CARD, "flex items-center justify-between gap-4")}>
-        <div>
-          <h3 className="font-inter text-[15px] font-semibold text-[#101928]">
-            Two-factor authentication
-          </h3>
-          <p className="font-inter mt-0.5 max-w-[520px] text-[13px] text-[#667085]">
-            Require a one-time code at sign-in for an extra layer of protection
-            on accounts with access to staff and compliance data.
-          </p>
-        </div>
-        <SecurityToggle checked={twoFactor} onChange={setTwoFactor} />
-      </div>
-
-      {/* Auto sign-out */}
-      <div className={cn(SECURITY_CARD, "flex flex-wrap items-center justify-between gap-4")}>
-        <div>
-          <h3 className="font-inter text-[15px] font-semibold text-[#101928]">
-            Automatic sign-out
-          </h3>
-          <p className="font-inter mt-0.5 max-w-[520px] text-[13px] text-[#667085]">
-            Sign out after a period of inactivity. Recommended on shared
-            workstations to support HIPAA auto-logoff.
-          </p>
-        </div>
-        <Select
-          items={AUTO_SIGNOUT_OPTIONS}
-          value={autoSignOut}
-          onValueChange={(v) => setAutoSignOut(v ?? "30")}
-        >
-          <SelectTrigger className="!h-11 w-[200px] rounded-[12px] border-[#e5e7ea] px-4 text-[14px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {AUTO_SIGNOUT_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value} className="text-[14px]">
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Active sessions */}
-      <div className={SECURITY_CARD}>
-        <h3 className="font-inter text-[15px] font-semibold text-[#101928]">
-          Active sessions
-        </h3>
-        <p className="font-inter mt-0.5 text-[13px] text-[#667085]">
-          Devices currently signed in to your account.
-        </p>
-        <div className="mt-4 space-y-2">
-          {sessions.map((s) => (
-            <div
-              key={s.id}
-              className="flex items-center gap-3 rounded-xl border border-[#f0f2f5] px-3 py-3"
-            >
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-[#f2f4f7] text-[#475367]">
-                {s.mobile ? (
-                  <Smartphone className="size-4" />
-                ) : (
-                  <Monitor className="size-4" />
-                )}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="font-inter flex items-center gap-2 text-[14px] font-medium text-[#101928]">
-                  <span className="truncate">{s.device}</span>
-                  {s.current && (
-                    <span className="rounded-full bg-[#ecfdf3] px-2 py-0.5 text-[11px] font-semibold text-[#027a48]">
-                      This device
-                    </span>
-                  )}
-                </p>
-                <p className="font-inter truncate text-[12px] text-[#667085]">
-                  {s.location} · {s.lastActive}
-                </p>
-              </div>
-              {!s.current && (
-                <button
-                  type="button"
-                  onClick={() => signOutSession(s.id)}
-                  className="font-inter inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-2 text-[13px] font-semibold text-[#d92d20] transition-colors hover:bg-[#fef3f2]"
-                >
-                  <LogOut className="size-4" /> Sign out
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 export default function SettingsPage() {
   const { systemRole } = useAppView()
@@ -1146,9 +619,7 @@ export default function SettingsPage() {
           <div className="pt-8">
             {tab === "users" && <UsersTab />}
             {tab === "roles" && <RolesTab />}
-            {tab === "tracks" && <TrainingTracksTab />}
             {tab === "facility" && <FacilityTab />}
-            {tab === "security" && <SecurityTab />}
           </div>
         </div>
       )}

@@ -151,9 +151,9 @@ function SidebarBody({
         {sections.map((section) => (
           <div key={section.heading} className="space-y-1">
             {collapsed ? (
-              <div className="mx-3 mb-2 h-px bg-[#f0f2f5]" />
+              <div className="mx-3 mb-2 h-px bg-line-soft" />
             ) : (
-              <p className="font-inter-tight px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[#9ea2ae]">
+              <p className="font-inter-tight px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-faint">
                 {section.heading}
               </p>
             )}
@@ -170,8 +170,8 @@ function SidebarBody({
                     "group flex items-center gap-3 rounded-xl py-2.5 text-[15px] font-medium transition-colors",
                     collapsed ? "justify-center px-0" : "px-3",
                     active
-                      ? "bg-[#f3f4f6] text-[#101928]"
-                      : "text-[#667085] hover:bg-[#f9fafb] hover:text-foreground"
+                      ? "bg-surface-muted text-ink dark:text-white"
+                      : "text-ink-muted hover:bg-surface-subtle hover:text-foreground dark:text-[#c5c5c5]"
                   )}
                 >
                   <Icon
@@ -179,7 +179,7 @@ function SidebarBody({
                       "size-5 shrink-0 transition-colors",
                       active
                         ? "text-primary"
-                        : "text-[#9ea2ae] group-hover:text-foreground"
+                        : "text-ink-faint group-hover:text-foreground"
                     )}
                   />
                   {!collapsed && (
@@ -192,7 +192,7 @@ function SidebarBody({
         ))}
       </nav>
       <DevRoleSimulator collapsed={collapsed} />
-      <div className="border-t border-[#f0f2f5] py-3">
+      <div className="border-t border-line-soft py-3">
         <FacilitySwitcher collapsed={collapsed} />
       </div>
     </>
@@ -211,7 +211,7 @@ function ViewSwitcher({ collapsed }: { collapsed: boolean }) {
         onClick={() => setView(next)}
         title={`Switch to ${next === "management" ? "Management" : "Learner"} view`}
         aria-label={`Switch to ${next === "management" ? "Management" : "Learner"} view`}
-        className="grid size-10 w-full place-items-center rounded-xl bg-[#f3f4f6] text-[#475367] transition-colors hover:bg-[#eceef2]"
+        className="grid size-10 w-full place-items-center rounded-xl bg-surface-muted text-ink-body transition-colors hover:bg-line"
       >
         <Icon className="size-5" />
       </button>
@@ -223,7 +223,7 @@ function ViewSwitcher({ collapsed }: { collapsed: boolean }) {
     { key: "learner", label: "Learn", icon: GraduationCap },
   ]
   return (
-    <div className="flex rounded-xl bg-[#f3f4f6] p-1">
+    <div className="flex rounded-xl bg-surface-muted p-1">
       {tabs.map(({ key, label, icon: Icon }) => {
         const active = view === key
         return (
@@ -234,8 +234,8 @@ function ViewSwitcher({ collapsed }: { collapsed: boolean }) {
             className={cn(
               "font-inter flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-semibold transition-colors",
               active
-                ? "bg-white text-[#101928] shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
-                : "text-[#667085] hover:text-foreground"
+                ? "bg-surface text-ink shadow-[0_1px_2px_rgba(16,24,40,0.08)]"
+                : "text-ink-muted hover:text-foreground"
             )}
           >
             <Icon className="size-4" />
@@ -280,11 +280,11 @@ function DevRoleSimulator({ collapsed }: { collapsed: boolean }) {
     "others",
   ]
   const selectCls =
-    "font-inter w-full rounded-lg border border-[#e4e7ec] bg-white px-2.5 py-1.5 text-[12px] text-[#344054] outline-none focus:border-primary"
+    "font-inter w-full rounded-lg border border-hairline bg-surface px-2.5 py-1.5 text-[12px] text-ink-body outline-none focus:border-primary"
 
   return (
-    <div className="m-3 mt-0 space-y-2 rounded-xl border border-dashed border-[#e4e7ec] bg-[#fafafa] p-3">
-      <p className="font-inter text-[10px] font-bold uppercase tracking-[0.08em] text-[#98a2b3]">
+    <div className="m-3 mt-0 space-y-2 rounded-xl border border-dashed border-hairline bg-surface-subtle p-3">
+      <p className="font-inter text-[10px] font-bold uppercase tracking-[0.08em] text-ink-faint">
         Dev · preview as
       </p>
       <select
@@ -339,14 +339,14 @@ function MobileDrawer({
       />
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 flex h-svh w-[280px] flex-col border-r border-[#f0f2f5] bg-white transition-transform duration-200 ease-out",
+          "fixed left-0 top-0 z-50 flex h-svh w-[280px] flex-col border-r border-line-soft bg-sidebar transition-transform duration-200 ease-out",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <button
           onClick={onClose}
           aria-label="Close menu"
-          className="absolute right-3 top-5 grid size-8 place-items-center rounded-lg text-[#667085] hover:bg-[#f9fafb]"
+          className="absolute right-3 top-5 grid size-8 place-items-center rounded-lg text-ink-muted hover:bg-surface-subtle"
         >
           <X className="size-5" />
         </button>
@@ -370,7 +370,7 @@ function UserMenu({ name, email }: { name: string; email: string }) {
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-[#f9fafb]"
+        className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition-colors hover:bg-surface-subtle"
       >
         <Avatar className="size-8">
           <AvatarFallback className="bg-primary text-xs text-primary-foreground">
@@ -385,8 +385,8 @@ function UserMenu({ name, email }: { name: string; email: string }) {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-[#f0f2f5] bg-white p-1 shadow-lg">
-            <div className="border-b border-[#f0f2f5] px-3 py-2.5">
+          <div className="absolute right-0 z-20 mt-2 w-56 rounded-xl border border-line-soft bg-surface p-1 shadow-lg">
+            <div className="border-b border-line-soft px-3 py-2.5">
               <p className="truncate text-sm font-medium text-foreground">
                 {name}
               </p>
@@ -394,7 +394,7 @@ function UserMenu({ name, email }: { name: string; email: string }) {
             </div>
             <button
               onClick={() => signOut()}
-              className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-[#f9fafb]"
+              className="mt-1 flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-subtle"
             >
               <LogOut className="size-4 text-muted-foreground" />
               Sign out
@@ -445,13 +445,13 @@ function Topbar({
   onOpenMobile: () => void
 }) {
   return (
-    <header className="z-10 flex h-16 shrink-0 items-center justify-between border-b border-[#f0f2f5] bg-white px-4 sm:px-6">
+    <header className="z-10 flex h-16 shrink-0 items-center justify-between border-b border-line-soft bg-surface px-4 sm:px-6">
       <div className="flex items-center gap-3">
         {/* mobile menu */}
         <button
           onClick={onOpenMobile}
           aria-label="Open menu"
-          className="grid size-9 place-items-center rounded-lg text-[#667085] transition-colors hover:bg-[#f9fafb] hover:text-foreground lg:hidden"
+          className="grid size-9 place-items-center rounded-lg text-ink-muted transition-colors hover:bg-surface-subtle hover:text-foreground lg:hidden"
         >
           <Menu className="size-5" />
         </button>
@@ -459,7 +459,7 @@ function Topbar({
         <button
           onClick={onToggleSidebar}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="hidden size-9 place-items-center rounded-lg text-[#667085] transition-colors hover:bg-[#f9fafb] hover:text-foreground lg:grid"
+          className="hidden size-9 place-items-center rounded-lg text-ink-muted transition-colors hover:bg-surface-subtle hover:text-foreground lg:grid"
         >
           {collapsed ? (
             <PanelLeftOpen className="size-5" />
@@ -472,18 +472,18 @@ function Topbar({
             const last = i === breadcrumb.length - 1
             return (
               <span key={crumb.label} className="flex items-center gap-1.5">
-                {i > 0 && <span className="text-[#cbd2dc]">/</span>}
+                {i > 0 && <span className="text-line-faint">/</span>}
                 {crumb.href && !last ? (
                   <Link
                     href={crumb.href}
-                    className="text-[#98a2b3] transition-colors hover:text-foreground hover:underline"
+                    className="text-ink-faint transition-colors hover:text-foreground hover:underline"
                   >
                     {crumb.label}
                   </Link>
                 ) : (
                   <span
                     className={
-                      last ? "font-medium text-[#2d3748]" : "text-[#98a2b3]"
+                      last ? "font-medium text-ink-body" : "text-ink-faint"
                     }
                   >
                     {crumb.label}
@@ -496,13 +496,13 @@ function Topbar({
       </div>
       <div className="flex items-center gap-3">
         <button
-          className="relative grid size-9 place-items-center rounded-full text-[#667085] transition-colors hover:bg-[#f9fafb]"
+          className="relative grid size-9 place-items-center rounded-full text-ink-muted transition-colors hover:bg-surface-subtle"
           aria-label="Notifications"
         >
           <Bell className="size-5" />
-          <span className="absolute right-2 top-2 size-2 rounded-full bg-destructive ring-2 ring-white" />
+          <span className="absolute right-2 top-2 size-2 rounded-full bg-destructive ring-2 ring-surface" />
         </button>
-        <div className="h-6 w-px bg-[#f0f2f5]" />
+        <div className="h-6 w-px bg-line-soft" />
         <UserMenu name={name} email={email} />
       </div>
     </header>
@@ -555,11 +555,11 @@ export function AppShell({
   }
 
   return (
-    <div className="flex h-svh overflow-hidden bg-[#f9fafb]">
+    <div className="flex h-svh overflow-hidden bg-surface-subtle">
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden h-svh shrink-0 flex-col border-r border-[#f0f2f5] bg-white transition-[width] duration-200 ease-out lg:flex",
+          "hidden h-svh shrink-0 flex-col border-r border-line-soft bg-sidebar transition-[width] duration-200 ease-out lg:flex",
           collapsed ? "w-[76px]" : "w-[264px]"
         )}
       >

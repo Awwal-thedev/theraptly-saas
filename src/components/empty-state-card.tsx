@@ -29,7 +29,7 @@ export function EmptyStateCard({
   className?: string
 }) {
   const ctaClass =
-    "font-inter inline-flex h-11 items-center justify-center rounded-xl bg-primary px-6 text-[14px] font-semibold text-white transition-colors hover:bg-brand-hover sm:text-[15px]"
+    "font-inter inline-flex h-11 items-center justify-center rounded-xl bg-primary px-6 text-[14px] font-semibold text-primary-foreground transition-colors hover:bg-brand-hover sm:text-[15px]"
   const cta =
     ctaLabel && (ctaHref || onCtaClick) ? (
       ctaHref ? (
@@ -46,7 +46,7 @@ export function EmptyStateCard({
   return (
     <div
       className={cn(
-        "flex flex-col items-center gap-6 rounded-2xl border border-[#eceef2] bg-white p-8 text-center sm:p-12",
+        "flex flex-col items-center gap-6 rounded-2xl border border-line bg-surface p-8 text-center sm:p-12",
         className
       )}
     >
@@ -59,10 +59,10 @@ export function EmptyStateCard({
         className="size-[180px] sm:size-[200px]"
       />
       <div className="flex flex-col gap-2">
-        <h3 className="font-inter-tight text-[18px] font-bold text-[#101928] sm:text-[20px]">
+        <h3 className="font-inter-tight text-[18px] font-bold text-ink sm:text-[20px]">
           {title}
         </h3>
-        <p className="font-inter mx-auto max-w-[480px] text-[14px] text-[#475367] sm:text-[15px]">
+        <p className="font-inter mx-auto max-w-[480px] text-[14px] text-ink-body sm:text-[15px]">
           {description}
         </p>
       </div>

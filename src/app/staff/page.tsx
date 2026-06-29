@@ -55,14 +55,14 @@ function StaffAvatar({ name }: { name: string }) {
       style={{ backgroundColor: bg, color: fg }}
     >
       {initialsOf(name)}
-      <span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-white bg-[#16A34A]" />
+      <span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-surface bg-[#16A34A]" />
     </span>
   )
 }
 
 function RoleBadge({ role }: { role: string }) {
   return (
-    <span className="inline-flex items-center rounded-full bg-[#dcfce7] px-3 py-1 text-[13px] font-semibold text-[#15803d]">
+    <span className="inline-flex items-center rounded-full bg-[#dcfce7] px-3 py-1 text-[13px] font-semibold text-[#15803d] dark:bg-positive-surface dark:text-positive">
       {role}
     </span>
   )
@@ -74,7 +74,7 @@ function RowMenu({ onView }: { onView: () => void }) {
       <DropdownMenuTrigger
         aria-label="More actions"
         onClick={(e) => e.stopPropagation()}
-        className="grid size-8 place-items-center rounded-lg border border-[#e4e7ec] text-[#667085] outline-none transition-colors hover:bg-[#f9fafb] data-[popup-open]:bg-[#f3f4f6]"
+        className="grid size-8 place-items-center rounded-lg border border-hairline text-ink-muted outline-none transition-colors hover:bg-surface-subtle data-[popup-open]:bg-surface-muted"
       >
         <MoreVertical className="size-4" />
       </DropdownMenuTrigger>
@@ -138,10 +138,10 @@ export default function StaffPage() {
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="font-inter text-[26px] font-semibold tracking-tight text-[#101928]">
+            <h1 className="font-inter text-[26px] font-semibold tracking-tight text-ink">
               Staff Details
             </h1>
-            <p className="font-inter text-[15px] text-[#667085]">
+            <p className="font-inter text-[15px] text-ink-muted">
               Here is an overview of your staff details
             </p>
           </div>
@@ -163,7 +163,7 @@ export default function StaffPage() {
           />
         ) : (
         /* Card */
-        <div className="rounded-2xl border border-[#eceef2] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+        <div className="rounded-2xl border border-line bg-surface shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
           <div className="p-4 sm:p-5">
             <SearchInput
               wrapperClassName="w-full"
@@ -177,7 +177,7 @@ export default function StaffPage() {
           <div className="hidden md:block">
             <table className="font-inter-tight w-full text-left">
               <thead>
-                <tr className="border-y border-[#f0f2f5] bg-[#f9fafb] text-[15px] font-medium text-[#667085]">
+                <tr className="border-y border-line-soft bg-surface-subtle text-[15px] font-medium text-ink-muted">
                   <th className="px-6 py-3 font-medium">Name</th>
                   <th className="px-6 py-3 font-medium">Role</th>
                   <th className="hidden px-6 py-3 font-medium lg:table-cell">
@@ -191,16 +191,16 @@ export default function StaffPage() {
                   <tr
                     key={s.id}
                     onClick={() => open(s.id)}
-                    className="cursor-pointer border-b border-dashed border-[#eceef2] text-[16px] font-medium text-[#475367] transition-colors last:border-0 hover:bg-[#f9fafb]"
+                    className="cursor-pointer border-b border-dashed border-line text-[16px] font-medium text-ink-body transition-colors last:border-0 hover:bg-surface-subtle"
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <StaffAvatar name={s.name} />
                         <div className="min-w-0">
-                          <p className="truncate font-semibold text-[#101928]">
+                          <p className="truncate font-semibold text-ink">
                             {s.name}
                           </p>
-                          <p className="truncate text-[13px] font-normal text-[#667085]">
+                          <p className="truncate text-[13px] font-normal text-ink-muted">
                             {s.email}
                           </p>
                         </div>
@@ -242,17 +242,17 @@ export default function StaffPage() {
           </div>
 
           {/* Stacked cards — below md */}
-          <div className="font-inter-tight space-y-3 border-t border-[#f0f2f5] p-4 md:hidden">
+          <div className="font-inter-tight space-y-3 border-t border-line-soft p-4 md:hidden">
             {paginated.map((s) => (
               <div
                 key={s.id}
                 onClick={() => open(s.id)}
-                className="cursor-pointer rounded-xl border border-[#f0f2f5] p-4 transition-colors hover:bg-[#f9fafb]"
+                className="cursor-pointer rounded-xl border border-line-soft p-4 transition-colors hover:bg-surface-subtle"
               >
                 <div className="flex items-start gap-3">
                   <StaffAvatar name={s.name} />
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-[#101928]">{s.name}</p>
+                    <p className="font-semibold text-ink">{s.name}</p>
                     <p className="text-sm text-muted-foreground">{s.email}</p>
                   </div>
                   <RowMenu onView={() => open(s.id)} />
@@ -277,8 +277,8 @@ export default function StaffPage() {
           </div>
 
           {/* Footer / pagination */}
-          <div className="flex flex-col gap-4 border-t border-[#f0f2f5] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="font-inter text-[14px] text-[#667085]">
+          <div className="flex flex-col gap-4 border-t border-line-soft p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <p className="font-inter text-[14px] text-ink-muted">
               Showing {total === 0 ? 0 : start + 1} to{" "}
               {Math.min(start + pageSize, total)} of {total} entries
             </p>
@@ -289,7 +289,7 @@ export default function StaffPage() {
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={safePage === 1}
                   aria-label="Previous page"
-                  className="grid size-9 place-items-center rounded-lg border border-[#e4e7ec] text-[#475367] transition-colors hover:bg-[#f9fafb] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="grid size-9 place-items-center rounded-lg border border-hairline text-ink-body transition-colors hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronLeft className="size-4" />
                 </button>
@@ -297,7 +297,7 @@ export default function StaffPage() {
                   p === "…" ? (
                     <span
                       key={`e${idx}`}
-                      className="font-inter grid size-9 place-items-center text-[14px] text-[#98a2b3]"
+                      className="font-inter grid size-9 place-items-center text-[14px] text-ink-faint"
                     >
                       …
                     </span>
@@ -308,8 +308,8 @@ export default function StaffPage() {
                       className={cn(
                         "font-inter grid size-9 place-items-center rounded-lg text-[14px] font-medium transition-colors",
                         p === safePage
-                          ? "bg-primary text-white"
-                          : "text-[#475367] hover:bg-[#f9fafb]"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-ink-body hover:bg-surface-subtle"
                       )}
                     >
                       {p}
@@ -320,14 +320,14 @@ export default function StaffPage() {
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={safePage === totalPages}
                   aria-label="Next page"
-                  className="grid size-9 place-items-center rounded-lg border border-[#e4e7ec] text-[#475367] transition-colors hover:bg-[#f9fafb] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="grid size-9 place-items-center rounded-lg border border-hairline text-ink-body transition-colors hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronRight className="size-4" />
                 </button>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="font-inter text-[14px] text-[#667085]">
+                <span className="font-inter text-[14px] text-ink-muted">
                   Show
                 </span>
                 <Select
@@ -337,7 +337,7 @@ export default function StaffPage() {
                     setPage(1)
                   }}
                 >
-                  <SelectTrigger className="font-inter !h-9 rounded-lg border-[#e4e7ec] text-[14px]">
+                  <SelectTrigger className="font-inter !h-9 rounded-lg border-hairline text-[14px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -348,7 +348,7 @@ export default function StaffPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <span className="font-inter text-[14px] text-[#667085]">
+                <span className="font-inter text-[14px] text-ink-muted">
                   entries
                 </span>
               </div>

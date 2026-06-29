@@ -43,6 +43,32 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
+  /* App tokens — custom-screen palette. Light values match the existing
+     hardcoded hexes exactly (so conversions are no-ops in light); dark values
+     are designed. See :root / .dark below. */
+  --color-ink: var(--ink);
+  --color-ink-body: var(--ink-body);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-muted: var(--surface-muted);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-hairline: var(--hairline);
+  --color-field: var(--field);
+  --color-line-faint: var(--line-faint);
+  --color-primary-tint: var(--primary-tint);
+  --color-positive: var(--positive);
+  --color-positive-surface: var(--positive-surface);
+  --color-positive-dot: var(--positive-dot);
+  --color-critical: var(--critical);
+  --color-critical-surface: var(--critical-surface);
+  --color-caution: var(--caution);
+  --color-caution-surface: var(--caution-surface);
+  --color-caution-border: var(--caution-border);
+
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -90,40 +116,89 @@
   --sidebar-accent-foreground: #5c47ff;
   --sidebar-border: #d0d5dd;
   --sidebar-ring: #5c47ff;
+
+  /* App tokens (light) — exact current values, so token swaps don't shift any pixel. */
+  --ink: #101928; /* headings / strong text */
+  --ink-body: #475367; /* body text */
+  --ink-muted: #667085; /* secondary / muted text */
+  --ink-faint: #98a2b3; /* placeholder / faint text */
+  --surface: #ffffff; /* cards / panels */
+  --surface-subtle: #f9fafb; /* page bg, subtle fills, hover */
+  --surface-muted: #f3f4f6; /* active nav, chips */
+  --line: #eceef2; /* card borders */
+  --line-soft: #f0f2f5; /* dividers, sidebar border */
+  --hairline: #e4e7ec; /* button / table borders */
+  --field: #e5e7ea; /* input borders */
+  --line-faint: #d0d5dd; /* stronger hairlines */
+  --primary-tint: #f4f3ff; /* primary badge / hover bg */
+  --positive: #027a48; /* success text */
+  --positive-surface: #ecfdf3; /* success bg */
+  --positive-dot: #12b76a; /* status dot */
+  --critical: #b42318; /* danger text */
+  --critical-surface: #fef3f2; /* danger bg */
+  --caution: #b54708; /* warning text */
+  --caution-surface: #fffbeb; /* warning bg */
+  --caution-border: #fde68a; /* warning border */
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.68 0.11 192);
-  --primary-foreground: oklch(0.18 0.02 210);
-  --secondary: oklch(0.27 0.02 210);
-  --secondary-foreground: oklch(0.97 0 0);
-  --muted: oklch(0.27 0.015 210);
-  --muted-foreground: oklch(0.7 0.02 200);
-  --accent: oklch(0.32 0.04 200);
-  --accent-foreground: oklch(0.95 0.02 192);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.68 0.11 192);
-  --chart-1: oklch(0.68 0.11 192);
-  --chart-2: oklch(0.7 0.12 160);
-  --chart-3: oklch(0.66 0.13 250);
-  --chart-4: oklch(0.75 0.14 90);
-  --chart-5: oklch(0.68 0.18 25);
-  --sidebar: oklch(0.2 0.012 210);
-  --sidebar-foreground: oklch(0.95 0 0);
-  --sidebar-primary: oklch(0.68 0.11 192);
-  --sidebar-primary-foreground: oklch(0.18 0.02 210);
-  --sidebar-accent: oklch(0.32 0.04 200);
-  --sidebar-accent-foreground: oklch(0.95 0.02 192);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.68 0.11 192);
+  /* ChatGPT-style neutral dark — warm grays (no hue tint) + brand purple accent.
+     Sidebar is recessed (#171717), main area #212121, cards elevated #2b2b2b. */
+  --background: #212121;
+  --foreground: #ececec;
+  --card: #2b2b2b;
+  --card-foreground: #ececec;
+  --popover: #2b2b2b;
+  --popover-foreground: #ececec;
+  --primary: #ffffff; /* white accent in dark (ChatGPT-style buttons) */
+  --primary-foreground: #1a1a1a; /* dark text on white buttons */
+  --brand-hover: #e6e6e6; /* off-white button hover */
+  --secondary: #2b2b2b;
+  --secondary-foreground: #ececec;
+  --muted: #2b2b2b;
+  --muted-foreground: #a4a4a4;
+  --accent: #383838;
+  --accent-foreground: #ececec;
+  --destructive: #f97066;
+  --border: #3a3a3a;
+  --input: #4a4a4a;
+  --ring: #ffffff;
+  --chart-1: #6f5cff;
+  --chart-2: #3da755;
+  --chart-3: #2e90fa;
+  --chart-4: #f79009;
+  --chart-5: #f04438;
+  --sidebar: #171717;
+  --sidebar-foreground: #ececec;
+  --sidebar-primary: #5c47ff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2b2b2b;
+  --sidebar-accent-foreground: #ececec;
+  --sidebar-border: #2f2f2f;
+  --sidebar-ring: #5c47ff;
+
+  /* App tokens (dark) — ChatGPT-style neutral grays. Only active under .dark. */
+  --ink: #ececec;
+  --ink-body: #cdcdcd;
+  --ink-muted: #a4a4a4;
+  --ink-faint: #8c8c8c;
+  --surface: #2b2b2b;
+  --surface-subtle: #212121;
+  --surface-muted: #383838;
+  --line: #3a3a3a;
+  --line-soft: #333333;
+  --hairline: #424242;
+  --field: #4a4a4a;
+  --line-faint: #4a4a4a;
+  --primary-tint: #2e2747;
+  --positive: #6ee7a8;
+  --positive-surface: #14361f;
+  --positive-dot: #34d399;
+  --critical: #ff8d7a;
+  --critical-surface: #3a1f1c;
+  --caution: #fbbf24;
+  --caution-surface: #2c2410;
+  --caution-border: #4a3a18;
 }
 
 @layer base {

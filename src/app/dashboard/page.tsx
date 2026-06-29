@@ -49,7 +49,7 @@ function Card({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-[#eceef2] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
+        "rounded-2xl border border-line bg-surface shadow-[0_1px_2px_rgba(16,24,40,0.05)]",
         className
       )}
     >
@@ -126,10 +126,10 @@ export default function DashboardPage() {
           {/* Header */}
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-1">
-              <h1 className="font-inter text-[26px] font-semibold leading-tight tracking-tight text-[#101928]">
+              <h1 className="font-inter text-[26px] font-semibold leading-tight tracking-tight text-ink">
                 Dashboard
               </h1>
-              <p className="font-inter text-[18px] text-[#667085]">
+              <p className="font-inter text-[18px] text-ink-muted">
                 Here is an overview of your courses
               </p>
             </div>
@@ -172,17 +172,17 @@ export default function DashboardPage() {
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="p-5 sm:p-6 lg:col-span-2">
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="font-inter-tight text-[20px] font-semibold text-[#101928]">
+                <h2 className="font-inter-tight text-[20px] font-semibold text-ink">
                   Performance of Learners
                 </h2>
-                <button className="font-inter-tight flex items-center gap-1.5 rounded-lg border border-[#e4e7ec] px-3 py-1.5 text-[15px] font-medium text-[#475367] transition-colors hover:bg-[#f9fafb]">
+                <button className="font-inter-tight flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-[15px] font-medium text-ink-body transition-colors hover:bg-surface-subtle">
                   Courses
                 </button>
               </div>
               <PerformanceChart />
             </Card>
             <Card className="p-5 sm:p-6">
-              <h2 className="font-inter-tight mb-4 text-[19px] font-semibold text-[#101928]">
+              <h2 className="font-inter-tight mb-4 text-[19px] font-semibold text-ink">
                 Training Coverage
               </h2>
               <TrainingCoverage />

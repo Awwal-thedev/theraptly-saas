@@ -71,23 +71,23 @@ export function FacilitySwitcher({ collapsed }: { collapsed: boolean }) {
         onClick={() => setOpen((o) => !o)}
         title={collapsed ? active.name : undefined}
         className={cn(
-          "flex w-full items-center rounded-xl border border-[#eceef2] bg-white transition-colors hover:bg-[#f9fafb]",
+          "flex w-full items-center rounded-xl border border-line bg-surface transition-colors hover:bg-surface-subtle",
           collapsed ? "justify-center p-1.5" : "gap-2.5 p-2.5",
-          open && "border-[#d0d5dd] bg-[#f9fafb]"
+          open && "border-line-faint bg-surface-subtle"
         )}
       >
         <FacilityLogo name={active.name} className="size-9" />
         {!collapsed && (
           <>
             <span className="min-w-0 flex-1 text-left">
-              <span className="font-inter block truncate text-[14px] font-semibold text-[#101928]">
+              <span className="font-inter block truncate text-[14px] font-semibold text-ink">
                 {active.name}
               </span>
-              <span className="font-inter block truncate text-[12px] text-[#667085]">
+              <span className="font-inter block truncate text-[12px] text-ink-muted">
                 {ORG_TYPE_LABELS[active.type]}
               </span>
             </span>
-            <ChevronsUpDown className="size-4 shrink-0 text-[#98a2b3]" />
+            <ChevronsUpDown className="size-4 shrink-0 text-ink-faint" />
           </>
         )}
       </button>
@@ -96,11 +96,11 @@ export function FacilitySwitcher({ collapsed }: { collapsed: boolean }) {
       {open && (
         <div
           className={cn(
-            "absolute bottom-full z-50 mb-2 w-[280px] overflow-hidden rounded-2xl border border-[#eceef2] bg-white shadow-[0_12px_40px_rgba(16,24,40,0.16)]",
+            "absolute bottom-full z-50 mb-2 w-[280px] overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_12px_40px_rgba(16,24,40,0.16)]",
             collapsed ? "left-2" : "left-3 right-3 w-auto"
           )}
         >
-          <p className="font-inter px-4 pb-1.5 pt-3.5 text-[13px] text-[#667085]">
+          <p className="font-inter px-4 pb-1.5 pt-3.5 text-[13px] text-ink-muted">
             Choose a facility
           </p>
           <div className="max-h-[320px] overflow-y-auto px-2 pb-1">
@@ -113,21 +113,21 @@ export function FacilitySwitcher({ collapsed }: { collapsed: boolean }) {
                   onClick={() => choose(f)}
                   className={cn(
                     "flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors",
-                    isActive ? "bg-[#f9fafb]" : "hover:bg-[#f9fafb]"
+                    isActive ? "bg-surface-subtle" : "hover:bg-surface-subtle"
                   )}
                 >
                   <FacilityLogo name={f.name} className="size-10" />
                   <span className="min-w-0 flex-1">
-                    <span className="font-inter block truncate text-[15px] font-semibold text-[#101928]">
+                    <span className="font-inter block truncate text-[15px] font-semibold text-ink">
                       {f.name}
                     </span>
-                    <span className="font-inter block truncate text-[13px] text-[#667085]">
+                    <span className="font-inter block truncate text-[13px] text-ink-muted">
                       {ORG_TYPE_LABELS[f.type]}
                       {f.plan ? ` · ${f.plan}` : ""}
                     </span>
                   </span>
                   {isActive && (
-                    <span className="grid size-5 shrink-0 place-items-center rounded-full bg-primary text-white">
+                    <span className="grid size-5 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
                       <Check className="size-3.5" strokeWidth={3} />
                     </span>
                   )}
@@ -135,16 +135,16 @@ export function FacilitySwitcher({ collapsed }: { collapsed: boolean }) {
               )
             })}
           </div>
-          <div className="border-t border-[#eceef2] p-2">
+          <div className="border-t border-line p-2">
             <button
               type="button"
               onClick={openAddFacility}
-              className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-[#f9fafb]"
+              className="flex w-full items-center gap-3 rounded-xl px-2.5 py-2.5 text-left transition-colors hover:bg-surface-subtle"
             >
-              <span className="grid size-10 shrink-0 place-items-center rounded-[10px] bg-[#f3f4f6] text-[#475367]">
+              <span className="grid size-10 shrink-0 place-items-center rounded-[10px] bg-surface-muted text-ink-body">
                 <Plus className="size-5" />
               </span>
-              <span className="font-inter text-[15px] font-semibold text-[#101928]">
+              <span className="font-inter text-[15px] font-semibold text-ink">
                 Add a new facility
               </span>
             </button>

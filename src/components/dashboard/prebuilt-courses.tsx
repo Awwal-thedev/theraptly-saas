@@ -20,10 +20,10 @@ export function PrebuiltCourses() {
   return (
     <div className="space-y-5 pt-2">
       <div className="space-y-1 text-center">
-        <h2 className="font-inter-tight text-[30px] font-semibold text-[#101928]">
+        <h2 className="font-inter-tight text-[30px] font-semibold text-ink">
           Choose a Prebuilt Course on Theraptly
         </h2>
-        <p className="font-inter mx-auto max-w-xl text-[16px] font-medium text-[#667085]">
+        <p className="font-inter mx-auto max-w-xl text-[16px] font-medium text-ink-muted">
           Choose a pre-built Theraptly course to expand with new training
           modules and organization-specific content.
         </p>
@@ -40,7 +40,7 @@ export function PrebuiltCourses() {
           <PrebuiltCourseCard key={course.title} course={course} />
         ))}
         {filtered.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-[#e4e7ec] py-12 text-center text-sm text-muted-foreground">
+          <div className="rounded-2xl border border-dashed border-hairline py-12 text-center text-sm text-muted-foreground">
             No prebuilt courses match “{query}”.
           </div>
         )}

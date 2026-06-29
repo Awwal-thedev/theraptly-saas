@@ -27,7 +27,7 @@ export function SearchInput({
       />
       <input
         className={cn(
-          "font-inter w-full border border-[#e4e7ec] bg-white outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/20",
+          "font-inter w-full border border-hairline bg-surface text-foreground outline-none placeholder:text-muted-foreground focus:border-ring focus:ring-[3px] focus:ring-ring/20 dark:bg-surface-subtle",
           sm
             ? "h-10 rounded-lg pl-9 pr-3 text-[14px]"
             : "h-14 rounded-xl pl-12 pr-4 text-[16px] shadow-[0_1px_2px_rgba(16,24,40,0.04)]",

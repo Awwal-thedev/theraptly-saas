@@ -14,8 +14,8 @@ function CourseIcon({ blue }: { blue: boolean }) {
   return (
     <span
       className={cn(
-        "grid size-9 shrink-0 place-items-center rounded-lg text-white",
-        blue ? "bg-primary" : "bg-[#101928]"
+        "grid size-9 shrink-0 place-items-center rounded-lg",
+        blue ? "bg-primary text-primary-foreground" : "bg-ink text-surface"
       )}
     >
       <BookOpen className="size-4" />
@@ -45,9 +45,9 @@ export function MyCourses() {
   )
 
   return (
-    <div className="rounded-2xl border border-[#eceef2] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+    <div className="rounded-2xl border border-line bg-surface shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
       <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
-        <h2 className="font-inter-tight text-[20px] font-semibold text-[#101928]">
+        <h2 className="font-inter-tight text-[20px] font-semibold text-ink">
           My Courses
         </h2>
         <SearchInput
@@ -63,7 +63,7 @@ export function MyCourses() {
       <div className="hidden md:block">
         <table className="font-inter-tight w-full text-left">
           <thead>
-            <tr className="border-y border-[#f0f2f5] bg-[#f9fafb] text-[15px] font-medium text-[#667085]">
+            <tr className="border-y border-line-soft bg-surface-subtle text-[15px] font-medium text-ink-muted">
               <th className="px-6 py-3 font-medium">Course Name</th>
               <th className="px-6 py-3 font-medium">Type</th>
               <th className="px-6 py-3 font-medium">Assigned Staff</th>
@@ -79,18 +79,18 @@ export function MyCourses() {
               <tr
                 key={c.name}
                 onClick={() => router.push(`/courses/${c.id}`)}
-                className="cursor-pointer border-b border-[#f0f2f5] text-[17px] font-medium text-[#475367] transition-colors last:border-0 hover:bg-[#f9fafb]"
+                className="cursor-pointer border-b border-line-soft text-[17px] font-medium text-ink-body transition-colors last:border-0 hover:bg-surface-subtle"
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <CourseIcon blue={i % 2 === 1} />
-                    <span className="font-semibold text-[#101928]">
+                    <span className="font-semibold text-ink">
                       {c.name}
                     </span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <FileText className="size-5 text-[#667085]" />
+                  <FileText className="size-5 text-ink-muted" />
                 </td>
                 <td className="px-6 py-4">{c.assigned}</td>
                 <td className="px-6 py-4">{c.completion}</td>
@@ -115,27 +115,27 @@ export function MyCourses() {
       </div>
 
       {/* Stacked cards — below md */}
-      <div className="font-inter-tight space-y-3 border-t border-[#f0f2f5] p-4 md:hidden">
+      <div className="font-inter-tight space-y-3 border-t border-line-soft p-4 md:hidden">
         {filtered.map((c, i) => (
           <div
             key={c.name}
             onClick={() => router.push(`/courses/${c.id}`)}
-            className="cursor-pointer rounded-xl border border-[#f0f2f5] p-4 transition-colors hover:bg-[#f9fafb]"
+            className="cursor-pointer rounded-xl border border-line-soft p-4 transition-colors hover:bg-surface-subtle"
           >
             <div className="flex items-start gap-3">
               <CourseIcon blue={i % 2 === 1} />
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-[#101928]">{c.name}</p>
+                <p className="font-semibold text-ink">{c.name}</p>
                 <p className="text-sm text-muted-foreground">{c.date}</p>
               </div>
-              <FileText className="size-5 text-[#667085]" />
+              <FileText className="size-5 text-ink-muted" />
             </div>
             <div className="mt-4 flex items-center justify-between gap-3 text-[15px]">
               <div>
                 <span className="text-muted-foreground">
                   {c.assigned} assigned ·{" "}
                 </span>
-                <span className="font-semibold text-[#101928]">
+                <span className="font-semibold text-ink">
                   {c.completion}
                 </span>
               </div>

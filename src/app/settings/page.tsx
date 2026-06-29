@@ -658,7 +658,7 @@ function FacilityTab() {
   }
 
   const inputCls =
-    "h-12 w-full rounded-[12px] border-[1.5px] border-[#e5e7ea] bg-white px-4 text-[14px] outline-none transition-colors placeholder:text-[#979797] focus:border-primary focus:ring-3 focus:ring-primary/15 sm:text-[15px]"
+    "h-12 w-full rounded-[12px] border-[1.5px] border-field bg-surface text-foreground dark:bg-surface-subtle px-4 text-[14px] outline-none transition-colors placeholder:text-[#979797] focus:border-primary focus:ring-3 focus:ring-primary/15 sm:text-[15px]"
   const labelCls = "font-inter text-[13px] font-medium text-[#475367] sm:text-[14px]"
 
   return (
@@ -772,7 +772,7 @@ function FacilityTab() {
 /* ---------------- Security tab ---------------- */
 
 const FIELD_INPUT =
-  "h-12 w-full rounded-[12px] border-[1.5px] border-[#e5e7ea] bg-white px-4 text-[14px] outline-none transition-colors placeholder:text-[#979797] focus:border-primary focus:ring-3 focus:ring-primary/15 sm:text-[15px]"
+  "h-12 w-full rounded-[12px] border-[1.5px] border-field bg-surface text-foreground dark:bg-surface-subtle px-4 text-[14px] outline-none transition-colors placeholder:text-[#979797] focus:border-primary focus:ring-3 focus:ring-primary/15 sm:text-[15px]"
 const FIELD_LABEL = "font-inter text-[13px] font-medium text-[#475367] sm:text-[14px]"
 
 const SECURITY_CARD =

@@ -39,7 +39,7 @@ export function DashboardEmptyState({ dismissible = true }: { dismissible?: bool
           type="button"
           onClick={() => setDismissed(true)}
           aria-label="Dismiss"
-          className="absolute right-0 top-0 grid size-10 place-items-center rounded-full bg-[#f4f4f4] text-[#475367] transition-colors hover:bg-[#e4e7ec]"
+          className="absolute right-0 top-0 grid size-10 place-items-center rounded-full bg-surface-muted text-ink-body transition-colors hover:bg-hairline"
         >
           <X className="size-5" />
         </button>
@@ -47,8 +47,8 @@ export function DashboardEmptyState({ dismissible = true }: { dismissible?: bool
 
       <div className="grid w-full max-w-[970px] items-center gap-10 lg:grid-cols-2 lg:gap-[51px]">
         {/* Illustration card */}
-        <div className="flex flex-col gap-6 rounded-[18px] bg-[#d3f5ee] px-8 py-10 sm:px-12 sm:py-14">
-          <div className="mx-auto w-full max-w-[345px]">
+        <div className="flex flex-col gap-6 rounded-[18px] bg-[#d3f5ee] px-8 py-10 dark:bg-[#13241c] dark:ring-1 dark:ring-inset dark:ring-white/[0.06] sm:px-12 sm:py-14">
+          <div className="mx-auto w-full max-w-[345px] dark:rounded-2xl dark:bg-[#d3f5ee] dark:p-3">
             <Image
               src="/dashboard/empty-state.png"
               alt=""
@@ -59,16 +59,16 @@ export function DashboardEmptyState({ dismissible = true }: { dismissible?: bool
             />
           </div>
           <div className="flex flex-col gap-3">
-            <h2 className="font-display text-[24px] font-bold leading-tight text-[#007d45] sm:text-[28px]">
+            <h2 className="font-display text-[24px] font-bold leading-tight text-[#007d45] dark:text-[#34d399] sm:text-[28px]">
               Turn Your Healthcare Policies into Interactive Training in Minutes.
             </h2>
-            <p className="font-inter text-[16px] font-medium text-black/70 sm:text-[17px]">
+            <p className="font-inter text-[16px] font-medium text-black/70 dark:text-white/70 sm:text-[17px]">
               Operationalize your policies and procedures by training your staff
             </p>
           </div>
           <Link
             href="/courses/new"
-            className="font-inter mt-2 inline-flex w-fit items-center justify-center rounded-full bg-[#007d45] px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-[#006a3a] sm:text-[16px]"
+            className="font-inter mt-2 inline-flex w-fit items-center justify-center rounded-full bg-[#007d45] px-6 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-[#006a3a] dark:bg-[#22c55e] dark:text-[#08160e] dark:hover:bg-[#16a34a] sm:text-[16px]"
           >
             Create your first course
           </Link>
@@ -76,16 +76,16 @@ export function DashboardEmptyState({ dismissible = true }: { dismissible?: bool
 
         {/* How to get started */}
         <div className="flex flex-col gap-8">
-          <h3 className="text-center font-inter text-[24px] font-bold tracking-tight text-black sm:text-[30px]">
+          <h3 className="text-center font-inter text-[24px] font-bold tracking-tight text-black dark:text-ink sm:text-[30px]">
             How to get started
           </h3>
           <ol className="flex flex-col gap-[22px]">
             {STEPS.map((s, i) => (
               <li key={s.title} className="flex flex-col gap-1">
-                <p className="font-inter text-[17px] font-bold text-black sm:text-[18px]">
+                <p className="font-inter text-[17px] font-bold text-black dark:text-ink sm:text-[18px]">
                   {i + 1}. {s.title}
                 </p>
-                <p className="font-inter pl-[18px] text-[14px] font-medium leading-relaxed text-[#7c7c7c] sm:text-[15px]">
+                <p className="font-inter pl-[18px] text-[14px] font-medium leading-relaxed text-[#7c7c7c] dark:text-ink-muted sm:text-[15px]">
                   {s.body}
                 </p>
               </li>

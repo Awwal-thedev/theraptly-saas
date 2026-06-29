@@ -47,8 +47,8 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="font-inter rounded-xl border border-[#eceef2] bg-white px-3 py-2 shadow-[0_8px_24px_rgba(16,24,40,0.12)]">
-      <p className="mb-1 text-xs font-medium text-[#101928]">{label}</p>
+    <div className="font-inter rounded-xl border border-line bg-surface px-3 py-2 shadow-[0_8px_24px_rgba(16,24,40,0.12)]">
+      <p className="mb-1 text-xs font-medium text-ink">{label}</p>
       {payload.map((p) => (
         <div key={p.name} className="flex items-center gap-2 text-xs">
           <span
@@ -56,7 +56,7 @@ function ChartTooltip({
             style={{ backgroundColor: p.color }}
           />
           <span className="text-muted-foreground">{p.name}</span>
-          <span className="ml-auto font-medium text-[#101928]">{p.value}%</span>
+          <span className="ml-auto font-medium text-ink">{p.value}%</span>
         </div>
       ))}
     </div>
@@ -73,15 +73,15 @@ function ChartEmpty({
   body: string
 }) {
   return (
-    <div className="flex h-[260px] w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[#e4e7ec] bg-[#fafbff] px-6 text-center">
-      <span className="grid size-10 place-items-center rounded-full bg-white text-[#98a2b3]">
+    <div className="flex h-[260px] w-full flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-hairline bg-surface-subtle px-6 text-center">
+      <span className="grid size-10 place-items-center rounded-full bg-surface text-ink-faint">
         <Icon className="size-5" />
       </span>
       <div>
-        <p className="font-inter-tight text-[15px] font-semibold text-[#101928]">
+        <p className="font-inter-tight text-[15px] font-semibold text-ink">
           {title}
         </p>
-        <p className="font-inter mt-1 text-[13px] text-[#667085]">{body}</p>
+        <p className="font-inter mt-1 text-[13px] text-ink-muted">{body}</p>
       </div>
     </div>
   )
@@ -242,7 +242,7 @@ export function TrainingCoverage() {
           <span className="text-[13px] font-medium text-muted-foreground">
             Total Assigned
           </span>
-          <span className="text-[28px] font-bold leading-none text-[#101928]">
+          <span className="text-[28px] font-bold leading-none text-ink">
             {totalAssigned}
           </span>
         </div>
@@ -258,7 +258,7 @@ export function TrainingCoverage() {
             <span className="flex-1 leading-snug text-muted-foreground">
               {c.label}
             </span>
-            <span className="font-medium text-[#101928]">{pct(c.value)}%</span>
+            <span className="font-medium text-ink">{pct(c.value)}%</span>
           </li>
         ))}
       </ul>

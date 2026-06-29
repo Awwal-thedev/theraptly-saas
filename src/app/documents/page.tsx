@@ -57,7 +57,9 @@ function DocIcon({ type }: { type: "pdf" | "docx" }) {
     <span
       className={cn(
         "grid size-9 shrink-0 place-items-center rounded-lg",
-        pdf ? "bg-[#fee4e2] text-[#d92d20]" : "bg-[#eff4ff] text-[#2563eb]"
+        pdf
+          ? "bg-[#fee4e2] text-[#d92d20] dark:bg-critical-surface dark:text-critical"
+          : "bg-[#eff4ff] text-[#2563eb] dark:bg-[#1d2a44] dark:text-[#7ab0ff]"
       )}
     >
       <FileText className="size-4" />
@@ -68,20 +70,20 @@ function DocIcon({ type }: { type: "pdf" | "docx" }) {
 function StatusBadge({ status }: { status: DocStatus }) {
   if (status === "Completed") {
     return (
-      <span className="font-inter inline-flex items-center gap-1.5 rounded-full bg-[#e7f6ec] px-2.5 py-1 text-[13px] font-medium text-[#099250]">
+      <span className="font-inter inline-flex items-center gap-1.5 rounded-full bg-[#e7f6ec] px-2.5 py-1 text-[13px] font-medium text-[#099250] dark:bg-positive-surface dark:text-positive">
         <CheckCircle2 className="size-3.5" /> Completed
       </span>
     )
   }
   if (status === "In progress") {
     return (
-      <span className="font-inter inline-flex items-center gap-1.5 rounded-full bg-[#fef6e7] px-2.5 py-1 text-[13px] font-medium text-[#b54708]">
+      <span className="font-inter inline-flex items-center gap-1.5 rounded-full bg-[#fef6e7] px-2.5 py-1 text-[13px] font-medium text-[#b54708] dark:bg-caution-surface dark:text-caution">
         <span className="size-1.5 rounded-full bg-current" /> In progress
       </span>
     )
   }
   return (
-    <span className="font-inter inline-flex items-center gap-1.5 rounded-full bg-[#fee4e2] px-2.5 py-1 text-[13px] font-medium text-[#d92d20]">
+    <span className="font-inter inline-flex items-center gap-1.5 rounded-full bg-[#fee4e2] px-2.5 py-1 text-[13px] font-medium text-[#d92d20] dark:bg-critical-surface dark:text-critical">
       <span className="size-1.5 rounded-full bg-current" /> Failed
     </span>
   )
@@ -190,10 +192,10 @@ export default function DocumentsPage() {
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="space-y-1">
-            <h1 className="font-inter text-[26px] font-semibold tracking-tight text-[#101928]">
+            <h1 className="font-inter text-[26px] font-semibold tracking-tight text-ink">
               Documents
             </h1>
-            <p className="font-inter text-[16px] text-[#667085]">
+            <p className="font-inter text-[16px] text-ink-muted">
               Documents and attachments that have been uploaded are displayed
               here
             </p>
@@ -215,7 +217,7 @@ export default function DocumentsPage() {
           />
         ) : (
         /* Card */
-        <div className="rounded-2xl border border-[#eceef2] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+        <div className="rounded-2xl border border-line bg-surface shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
           <div className="p-4 sm:p-5">
             <SearchInput
               wrapperClassName="w-full"
@@ -229,7 +231,7 @@ export default function DocumentsPage() {
           <div className="hidden md:block">
             <table className="font-inter-tight w-full text-left">
               <thead>
-                <tr className="border-y border-[#f0f2f5] bg-[#f9fafb] text-[15px] font-medium text-[#667085]">
+                <tr className="border-y border-line-soft bg-surface-subtle text-[15px] font-medium text-ink-muted">
                   <th className="px-6 py-3 font-medium">Document Name</th>
                   <th className="px-6 py-3 font-medium">Date Uploaded</th>
                   <th className="px-6 py-3 font-medium">Status</th>
@@ -244,7 +246,7 @@ export default function DocumentsPage() {
                     key={d.id}
                     onClick={() => href && router.push(href)}
                     className={cn(
-                      "border-b border-dashed border-[#eceef2] text-[16px] font-medium text-[#475367] transition-colors last:border-0 hover:bg-[#f9fafb]",
+                      "border-b border-dashed border-line text-[16px] font-medium text-ink-body transition-colors last:border-0 hover:bg-surface-subtle",
                       href && "cursor-pointer"
                     )}
                   >
@@ -252,7 +254,7 @@ export default function DocumentsPage() {
                       <div className="flex items-center gap-3">
                         <DocIcon type={d.type} />
                         <div className="min-w-0">
-                          <p className="font-semibold text-[#101928]">
+                          <p className="font-semibold text-ink">
                             {d.name}
                           </p>
                           <p className="font-inter text-[13px] text-muted-foreground">
@@ -289,7 +291,7 @@ export default function DocumentsPage() {
           </div>
 
           {/* Stacked cards — below md */}
-          <div className="font-inter-tight space-y-3 border-t border-[#f0f2f5] p-4 md:hidden">
+          <div className="font-inter-tight space-y-3 border-t border-line-soft p-4 md:hidden">
             {paginated.map((d) => {
               const href = courseHref(d)
               return (
@@ -297,14 +299,14 @@ export default function DocumentsPage() {
                 key={d.id}
                 onClick={() => href && router.push(href)}
                 className={cn(
-                  "rounded-xl border border-[#f0f2f5] p-4 transition-colors",
-                  href && "cursor-pointer hover:bg-[#f9fafb]"
+                  "rounded-xl border border-line-soft p-4 transition-colors",
+                  href && "cursor-pointer hover:bg-surface-subtle"
                 )}
               >
                 <div className="flex items-start gap-3">
                   <DocIcon type={d.type} />
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-[#101928]">{d.name}</p>
+                    <p className="font-semibold text-ink">{d.name}</p>
                     <p className="text-sm text-muted-foreground">
                       {d.size} · {d.date}
                     </p>
@@ -326,8 +328,8 @@ export default function DocumentsPage() {
           </div>
 
           {/* Footer / pagination */}
-          <div className="flex flex-col gap-4 border-t border-[#f0f2f5] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="font-inter text-[14px] text-[#667085]">
+          <div className="flex flex-col gap-4 border-t border-line-soft p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <p className="font-inter text-[14px] text-ink-muted">
               Showing {total === 0 ? 0 : startIndex + 1} to{" "}
               {Math.min(startIndex + pageSize, total)} of {total} entries
             </p>
@@ -338,7 +340,7 @@ export default function DocumentsPage() {
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={safePage === 1}
                   aria-label="Previous page"
-                  className="grid size-9 place-items-center rounded-lg border border-[#e4e7ec] text-[#475367] transition-colors hover:bg-[#f9fafb] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="grid size-9 place-items-center rounded-lg border border-hairline text-ink-body transition-colors hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronLeft className="size-4" />
                 </button>
@@ -346,7 +348,7 @@ export default function DocumentsPage() {
                   p === "…" ? (
                     <span
                       key={`e${idx}`}
-                      className="font-inter grid size-9 place-items-center text-[14px] text-[#98a2b3]"
+                      className="font-inter grid size-9 place-items-center text-[14px] text-ink-faint"
                     >
                       …
                     </span>
@@ -357,8 +359,8 @@ export default function DocumentsPage() {
                       className={cn(
                         "font-inter grid size-9 place-items-center rounded-lg text-[14px] font-medium transition-colors",
                         p === safePage
-                          ? "bg-primary text-white"
-                          : "text-[#475367] hover:bg-[#f9fafb]"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-ink-body hover:bg-surface-subtle"
                       )}
                     >
                       {p}
@@ -369,19 +371,19 @@ export default function DocumentsPage() {
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={safePage === totalPages}
                   aria-label="Next page"
-                  className="grid size-9 place-items-center rounded-lg border border-[#e4e7ec] text-[#475367] transition-colors hover:bg-[#f9fafb] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="grid size-9 place-items-center rounded-lg border border-hairline text-ink-body transition-colors hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronRight className="size-4" />
                 </button>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="font-inter text-[14px] text-[#667085]">Show</span>
+                <span className="font-inter text-[14px] text-ink-muted">Show</span>
                 <Select
                   value={String(pageSize)}
                   onValueChange={(v) => setPageSize(Number(v))}
                 >
-                  <SelectTrigger className="font-inter !h-9 rounded-lg border-[#e4e7ec] text-[14px]">
+                  <SelectTrigger className="font-inter !h-9 rounded-lg border-hairline text-[14px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -392,7 +394,7 @@ export default function DocumentsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <span className="font-inter text-[14px] text-[#667085]">
+                <span className="font-inter text-[14px] text-ink-muted">
                   entries
                 </span>
               </div>
@@ -405,11 +407,11 @@ export default function DocumentsPage() {
       {/* Upload modal */}
       {uploadOpen && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-          <div className="w-full max-w-[460px] rounded-2xl bg-white p-6 shadow-[0_4px_40px_rgba(0,0,0,0.08)]">
-            <h2 className="font-inter-tight text-[18px] font-semibold text-[#101928]">
+          <div className="w-full max-w-[460px] rounded-2xl bg-surface p-6 shadow-[0_4px_40px_rgba(0,0,0,0.08)]">
+            <h2 className="font-inter-tight text-[18px] font-semibold text-ink">
               Upload a document
             </h2>
-            <p className="font-inter mt-1 text-[14px] text-[#667085]">
+            <p className="font-inter mt-1 text-[14px] text-ink-muted">
               Upload a policy document and Theraptly will generate a course from
               it.
             </p>
@@ -424,22 +426,22 @@ export default function DocumentsPage() {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="mt-4 flex w-full flex-col items-center gap-2 rounded-2xl border border-dashed border-[#d0d5dd] bg-[#f9fafb] px-6 py-10 text-center transition-colors hover:border-primary hover:bg-[#f4f3ff]"
+              className="mt-4 flex w-full flex-col items-center gap-2 rounded-2xl border border-dashed border-line-faint bg-surface-subtle px-6 py-10 text-center transition-colors hover:border-primary hover:bg-primary-tint"
             >
-              <span className="grid size-12 place-items-center rounded-full bg-white text-primary shadow-sm">
+              <span className="grid size-12 place-items-center rounded-full bg-surface text-primary shadow-sm">
                 <UploadCloud className="size-6" />
               </span>
-              <span className="font-inter text-[15px] font-medium text-[#101928]">
+              <span className="font-inter text-[15px] font-medium text-ink">
                 Click to upload
               </span>
-              <span className="font-inter text-[13px] text-[#667085]">
+              <span className="font-inter text-[13px] text-ink-muted">
                 PDF or DOCX (max 10MB)
               </span>
             </button>
             <div className="mt-5 flex justify-end">
               <button
                 onClick={() => setUploadOpen(false)}
-                className="font-inter h-11 rounded-xl border border-[#e4e7ec] px-5 text-[15px] font-semibold text-[#475367] transition-colors hover:bg-[#f9fafb]"
+                className="font-inter h-11 rounded-xl border border-hairline px-5 text-[15px] font-semibold text-ink-body transition-colors hover:bg-surface-subtle"
               >
                 Cancel
               </button>
@@ -477,7 +479,7 @@ function DocAction({ doc, onRetry }: { doc: DocItem; onRetry: () => void }) {
     )
   }
   return (
-    <span className="font-inter cursor-default text-[15px] font-semibold text-[#cbd2dc]">
+    <span className="font-inter cursor-default text-[15px] font-semibold text-line-faint">
       View Course
     </span>
   )
@@ -489,7 +491,7 @@ function RowMenu({ onDelete }: { onDelete: () => void }) {
       <DropdownMenuTrigger
         aria-label="More actions"
         onClick={(e) => e.stopPropagation()}
-        className="grid size-8 place-items-center rounded-lg border border-[#e4e7ec] text-[#667085] outline-none transition-colors hover:bg-[#f9fafb]"
+        className="grid size-8 place-items-center rounded-lg border border-hairline text-ink-muted outline-none transition-colors hover:bg-surface-subtle"
       >
         <MoreVertical className="size-4" />
       </DropdownMenuTrigger>

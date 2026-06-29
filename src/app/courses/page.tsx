@@ -42,8 +42,8 @@ function CourseIcon({ blue }: { blue: boolean }) {
   return (
     <span
       className={cn(
-        "grid size-9 shrink-0 place-items-center rounded-lg text-white",
-        blue ? "bg-primary" : "bg-[#101928]"
+        "grid size-9 shrink-0 place-items-center rounded-lg",
+        blue ? "bg-primary text-primary-foreground" : "bg-ink text-surface"
       )}
     >
       <BookOpen className="size-4" />
@@ -53,7 +53,7 @@ function CourseIcon({ blue }: { blue: boolean }) {
 
 function TypeIcon() {
   return (
-    <span className="inline-grid size-8 place-items-center rounded-md border border-[#e4e7ec] text-[#667085]">
+    <span className="inline-grid size-8 place-items-center rounded-md border border-hairline text-ink-muted">
       <Play className="size-3.5 translate-x-px fill-current" />
     </span>
   )
@@ -161,7 +161,7 @@ export default function CoursesPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <h1 className="font-inter text-[26px] font-semibold tracking-tight text-[#101928]">
+          <h1 className="font-inter text-[26px] font-semibold tracking-tight text-ink">
             Courses
           </h1>
           <Button
@@ -183,7 +183,7 @@ export default function CoursesPage() {
           />
         ) : (
           /* Card */
-        <div className="rounded-2xl border border-[#eceef2] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
+        <div className="rounded-2xl border border-line bg-surface shadow-[0_1px_2px_rgba(16,24,40,0.05)]">
           <div className="p-4 sm:p-5">
             <SearchInput
               wrapperClassName="w-full"
@@ -197,7 +197,7 @@ export default function CoursesPage() {
           <div className="hidden md:block">
             <table className="font-inter-tight w-full text-left">
               <thead>
-                <tr className="border-y border-[#f0f2f5] bg-[#f9fafb] text-[15px] font-medium text-[#667085]">
+                <tr className="border-y border-line-soft bg-surface-subtle text-[15px] font-medium text-ink-muted">
                   <th className="px-6 py-3 font-medium">Course Name</th>
                   <th className="px-6 py-3 font-medium">Type</th>
                   <th className="px-6 py-3 font-medium">Assigned Staff</th>
@@ -213,12 +213,12 @@ export default function CoursesPage() {
                   <tr
                     key={c.id}
                     onClick={() => router.push(`/courses/${c.id}`)}
-                    className="cursor-pointer border-b border-dashed border-[#eceef2] text-[16px] font-medium text-[#475367] transition-colors last:border-0 hover:bg-[#f9fafb]"
+                    className="cursor-pointer border-b border-dashed border-line text-[16px] font-medium text-ink-body transition-colors last:border-0 hover:bg-surface-subtle"
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <CourseIcon blue={(start + i) % 2 === 1} />
-                        <span className="font-semibold text-[#101928]">
+                        <span className="font-semibold text-ink">
                           {c.name}
                         </span>
                       </div>
@@ -261,17 +261,17 @@ export default function CoursesPage() {
           </div>
 
           {/* Stacked cards — below md */}
-          <div className="font-inter-tight space-y-3 border-t border-[#f0f2f5] p-4 md:hidden">
+          <div className="font-inter-tight space-y-3 border-t border-line-soft p-4 md:hidden">
             {paginated.map((c, i) => (
               <div
                 key={c.id}
                 onClick={() => router.push(`/courses/${c.id}`)}
-                className="cursor-pointer rounded-xl border border-[#f0f2f5] p-4 transition-colors hover:bg-[#f9fafb]"
+                className="cursor-pointer rounded-xl border border-line-soft p-4 transition-colors hover:bg-surface-subtle"
               >
                 <div className="flex items-start gap-3">
                   <CourseIcon blue={(start + i) % 2 === 1} />
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-[#101928]">{c.name}</p>
+                    <p className="font-semibold text-ink">{c.name}</p>
                     <p className="text-sm text-muted-foreground">{c.date}</p>
                   </div>
                   <RowMenu
@@ -301,8 +301,8 @@ export default function CoursesPage() {
           </div>
 
           {/* Footer / pagination */}
-          <div className="flex flex-col gap-4 border-t border-[#f0f2f5] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="font-inter text-[14px] text-[#667085]">
+          <div className="flex flex-col gap-4 border-t border-line-soft p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <p className="font-inter text-[14px] text-ink-muted">
               Showing {total === 0 ? 0 : start + 1} to{" "}
               {Math.min(start + pageSize, total)} of {total} entries
             </p>
@@ -313,7 +313,7 @@ export default function CoursesPage() {
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={safePage === 1}
                   aria-label="Previous page"
-                  className="grid size-9 place-items-center rounded-lg border border-[#e4e7ec] text-[#475367] transition-colors hover:bg-[#f9fafb] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="grid size-9 place-items-center rounded-lg border border-hairline text-ink-body transition-colors hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronLeft className="size-4" />
                 </button>
@@ -321,7 +321,7 @@ export default function CoursesPage() {
                   p === "…" ? (
                     <span
                       key={`e${idx}`}
-                      className="font-inter grid size-9 place-items-center text-[14px] text-[#98a2b3]"
+                      className="font-inter grid size-9 place-items-center text-[14px] text-ink-faint"
                     >
                       …
                     </span>
@@ -332,8 +332,8 @@ export default function CoursesPage() {
                       className={cn(
                         "font-inter grid size-9 place-items-center rounded-lg text-[14px] font-medium transition-colors",
                         p === safePage
-                          ? "bg-primary text-white"
-                          : "text-[#475367] hover:bg-[#f9fafb]"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-ink-body hover:bg-surface-subtle"
                       )}
                     >
                       {p}
@@ -344,19 +344,19 @@ export default function CoursesPage() {
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={safePage === totalPages}
                   aria-label="Next page"
-                  className="grid size-9 place-items-center rounded-lg border border-[#e4e7ec] text-[#475367] transition-colors hover:bg-[#f9fafb] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="grid size-9 place-items-center rounded-lg border border-hairline text-ink-body transition-colors hover:bg-surface-subtle disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   <ChevronRight className="size-4" />
                 </button>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="font-inter text-[14px] text-[#667085]">Show</span>
+                <span className="font-inter text-[14px] text-ink-muted">Show</span>
                 <Select
                   value={String(pageSize)}
                   onValueChange={(v) => setPageSize(Number(v))}
                 >
-                  <SelectTrigger className="font-inter !h-9 rounded-lg border-[#e4e7ec] text-[14px]">
+                  <SelectTrigger className="font-inter !h-9 rounded-lg border-hairline text-[14px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -367,7 +367,7 @@ export default function CoursesPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <span className="font-inter text-[14px] text-[#667085]">
+                <span className="font-inter text-[14px] text-ink-muted">
                   entries
                 </span>
               </div>
@@ -381,7 +381,7 @@ export default function CoursesPage() {
       {renaming && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
           <div className="w-full max-w-[420px] rounded-2xl bg-white p-6 shadow-[0_4px_40px_rgba(0,0,0,0.08)]">
-            <h2 className="font-inter-tight text-[18px] font-semibold text-[#101928]">
+            <h2 className="font-inter-tight text-[18px] font-semibold text-ink">
               Rename course
             </h2>
             <input
@@ -392,12 +392,12 @@ export default function CoursesPage() {
                 if (e.key === "Enter") saveRename()
                 if (e.key === "Escape") setRenaming(null)
               }}
-              className="font-inter mt-4 h-12 w-full rounded-xl border border-[#e5e7ea] bg-white px-4 text-[15px] text-[#101928] outline-none transition-colors focus:border-primary focus:ring-3 focus:ring-primary/15"
+              className="font-inter mt-4 h-12 w-full rounded-xl border border-field bg-white px-4 text-[15px] text-ink outline-none transition-colors focus:border-primary focus:ring-3 focus:ring-primary/15"
             />
             <div className="mt-5 flex justify-end gap-3">
               <button
                 onClick={() => setRenaming(null)}
-                className="font-inter h-11 rounded-xl border border-[#e4e7ec] px-5 text-[15px] font-semibold text-[#475367] transition-colors hover:bg-[#f9fafb]"
+                className="font-inter h-11 rounded-xl border border-hairline px-5 text-[15px] font-semibold text-ink-body transition-colors hover:bg-surface-subtle"
               >
                 Cancel
               </button>
@@ -427,7 +427,7 @@ function RowMenu({
       <DropdownMenuTrigger
         aria-label="More actions"
         onClick={(e) => e.stopPropagation()}
-        className="grid size-8 place-items-center rounded-lg border border-[#e4e7ec] text-[#667085] outline-none transition-colors hover:bg-[#f9fafb] data-[popup-open]:bg-[#f3f4f6]"
+        className="grid size-8 place-items-center rounded-lg border border-hairline text-ink-muted outline-none transition-colors hover:bg-surface-subtle data-[popup-open]:bg-surface-muted"
       >
         <MoreVertical className="size-4" />
       </DropdownMenuTrigger>

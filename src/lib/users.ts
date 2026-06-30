@@ -12,7 +12,12 @@
 
 import { useEffect, useState } from "react"
 
-import type { SystemRole, WorkerRole } from "@/lib/auth/roles"
+import {
+  SYSTEM_ROLE_LABELS,
+  WORKER_ROLE_LABELS,
+  type SystemRole,
+  type WorkerRole,
+} from "@/lib/auth/roles"
 
 export type UserStatus = "active" | "invited" | "suspended"
 
@@ -77,6 +82,24 @@ export function removeUser(id: string) {
   write(read().filter((u) => u.id !== id))
 }
 
+/** A facility user is a "manager" if they hold any non-student system role. */
+export function userKind(u: FacilityUser): "manager" | "worker" {
+  return u.systemRole === "student" ? "worker" : "manager"
+}
+
+/** The role label to show on the roster — system role for managers, training
+ * discipline for workers. */
+export function roleLabel(u: FacilityUser): string {
+  return u.systemRole === "student"
+    ? WORKER_ROLE_LABELS[u.workerRole]
+    : SYSTEM_ROLE_LABELS[u.systemRole]
+}
+
+/** Non-reactive lookup by id (e.g. for a profile page). */
+export function findFacilityUser(id: string): FacilityUser | undefined {
+  return read().find((u) => u.id === id)
+}
+
 function subscribe(onChange: () => void): () => void {
   if (typeof window === "undefined") return () => {}
   const handler = () => onChange()
@@ -97,4 +120,15 @@ export function useFacilityUsers(): FacilityUser[] {
     return subscribe(sync)
   }, [])
   return users
+}
+
+/** Reactive lookup of a single user by id. */
+export function useFacilityUser(id: string): FacilityUser | undefined {
+  const [user, setUser] = useState<FacilityUser | undefined>(undefined)
+  useEffect(() => {
+    const sync = () => setUser(read().find((u) => u.id === id))
+    sync()
+    return subscribe(sync)
+  }, [id])
+  return user
 }

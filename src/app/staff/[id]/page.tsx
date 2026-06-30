@@ -22,13 +22,13 @@ import type { ComponentType, SVGProps } from "react"
 import { cn } from "@/lib/utils"
 import {
   avatarTone,
-  findStaff,
   initialsOf,
   staffCertificates,
   staffStats,
   staffTrainings,
   type StaffTraining,
 } from "@/lib/staff"
+import { roleLabel, useFacilityUsers, userKind } from "@/lib/users"
 import { AppShell } from "@/components/app/app-shell"
 import { Button } from "@/components/ui/button"
 import {
@@ -102,7 +102,9 @@ const STAT_TILES: {
 
 export default function StaffProfilePage() {
   const params = useParams<{ id: string }>()
-  const member = findStaff(params.id)
+  const users = useFacilityUsers()
+  const member = users.find((u) => u.id === params.id)
+  if (users.length === 0) return null // store still hydrating
   if (!member) notFound()
   const { bg: tBg, fg: tFg } = avatarTone(member.name)
 
@@ -132,8 +134,15 @@ export default function StaffProfilePage() {
               <p className="font-inter text-[14px] text-[#667085] sm:text-[15px]">
                 {member.email}
               </p>
-              <span className="inline-flex items-center rounded-full bg-[#E9ECF9] px-3 py-1 text-[12px] font-semibold text-[#162EA3] sm:text-[13px]">
-                {member.jobTitle ?? member.role}
+              <span
+                className={cn(
+                  "inline-flex items-center rounded-full px-3 py-1 text-[12px] font-semibold sm:text-[13px]",
+                  userKind(member) === "manager"
+                    ? "bg-[#f4f3ff] text-primary"
+                    : "bg-[#dcfce7] text-[#15803d]"
+                )}
+              >
+                {roleLabel(member)}
               </span>
             </div>
             <Button

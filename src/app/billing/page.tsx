@@ -286,22 +286,24 @@ export default function BillingPage() {
           })}
         </div>
 
-        {tab === "overview" && (
-          <div className="space-y-6">
-            <div className="flex flex-col gap-6 lg:flex-row">
-              <CurrentPlanCard />
-              <StaffUsageCard />
+        <div className="pt-8">
+          {tab === "overview" && (
+            <div className="space-y-6">
+              <div className="flex flex-col gap-6 lg:flex-row">
+                <CurrentPlanCard />
+                <StaffUsageCard />
+              </div>
+              <div className="flex flex-col gap-6 lg:flex-row">
+                <PaymentMethodCard />
+                <RecentInvoicesCard />
+              </div>
             </div>
-            <div className="flex flex-col gap-6 lg:flex-row">
-              <PaymentMethodCard />
-              <RecentInvoicesCard />
-            </div>
-          </div>
-        )}
+          )}
 
-        {tab === "history" && <ComingSoon label="Billing History" />}
-        {tab === "subscription" && <ComingSoon label="Subscription" />}
-        {tab === "payment" && <ComingSoon label="Payment Method" />}
+          {tab === "history" && <ComingSoon label="Billing History" />}
+          {tab === "subscription" && <ComingSoon label="Subscription" />}
+          {tab === "payment" && <ComingSoon label="Payment Method" />}
+        </div>
       </div>
     </AppShell>
   )

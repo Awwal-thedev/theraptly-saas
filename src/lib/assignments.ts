@@ -75,3 +75,14 @@ export function useAssignments(courseId: string): CourseAssignment[] {
   }, [courseId])
   return list
 }
+
+/** Reactive view of every assignment across all courses (e.g. for dashboards). */
+export function useAllAssignments(): CourseAssignment[] {
+  const [list, setList] = useState<CourseAssignment[]>([])
+  useEffect(() => {
+    const sync = () => setList(read())
+    sync()
+    return subscribe(sync)
+  }, [])
+  return list
+}

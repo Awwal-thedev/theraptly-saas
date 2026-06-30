@@ -18,7 +18,7 @@ import {
 import { toast } from "sonner"
 
 import { signUpSchema, passwordRules, type SignUpValues } from "@/lib/validations"
-import { useAuth } from "@/lib/auth/auth-context"
+import { EmailAlreadyRegisteredError, useAuth } from "@/lib/auth/auth-context"
 import type { OrgType } from "@/lib/auth/types"
 import { ORG_TYPE_LABELS, setFacilities, type Facility } from "@/lib/facilities"
 import { cn } from "@/lib/utils"
@@ -140,8 +140,20 @@ export default function SignupPage() {
         toast.success("Account created!")
         router.replace("/onboarding/role")
       }
-    } catch {
-      toast.error("Could not create your account. Please try again.")
+    } catch (err) {
+      if (err instanceof EmailAlreadyRegisteredError) {
+        form.setError("email", {
+          type: "manual",
+          message: "An account with this email already exists.",
+        })
+        setStep(0)
+        toast.error("You already have an account with this email.", {
+          description: "Log in instead, or use a different email to sign up.",
+          action: { label: "Log in", onClick: () => router.push("/login") },
+        })
+      } else {
+        toast.error("Could not create your account. Please try again.")
+      }
       setSubmitting(false)
     }
   }

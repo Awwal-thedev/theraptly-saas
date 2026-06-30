@@ -32,6 +32,22 @@ import type {
 const PENDING_EMAIL_KEY = "theraptly:pending-email"
 
 /**
+ * Thrown by `signUp` when the email already belongs to an existing account, so
+ * the UI can steer the user to log in instead of showing a generic error.
+ *
+ * Supabase signals this two different ways: with confirmations OFF it returns a
+ * "User already registered" error; with confirmations ON it (deliberately, to
+ * avoid user enumeration) returns a success with an empty `identities` array.
+ * We normalise both into this one error.
+ */
+export class EmailAlreadyRegisteredError extends Error {
+  constructor() {
+    super("An account with this email already exists.")
+    this.name = "EmailAlreadyRegisteredError"
+  }
+}
+
+/**
  * DEV ONLY. In development, AuthProvider injects a mock signed-in user and
  * skips Supabase entirely — so the app is easy to test while building, no
  * login required. Pair with the dev auth bypass in lib/supabase/middleware.ts.
@@ -204,7 +220,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: { full_name: input.fullName, role: input.role },
         },
       })
-      if (error) throw error
+      if (error) {
+        // Confirmations OFF: Supabase rejects the duplicate outright.
+        if (
+          error.code === "user_already_exists" ||
+          error.status === 422 ||
+          /already\s*registered|already\s*exists/i.test(error.message)
+        ) {
+          throw new EmailAlreadyRegisteredError()
+        }
+        throw error
+      }
+      // Confirmations ON: a duplicate signup "succeeds" but with no new identity
+      // (Supabase masks it to avoid leaking which emails are registered).
+      if (
+        data.user &&
+        Array.isArray(data.user.identities) &&
+        data.user.identities.length === 0
+      ) {
+        throw new EmailAlreadyRegisteredError()
+      }
       // If email confirmation is disabled, Supabase returns a session immediately.
       if (data.session) {
         setPending(null)

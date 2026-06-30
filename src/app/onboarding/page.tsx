@@ -6,16 +6,24 @@ import {
   Check,
   ChevronDown,
   FolderUp,
+  Info,
   Loader2,
   PlusCircle,
   Trash2,
-  X,
 } from "lucide-react"
 import { toast } from "sonner"
 
 import { useAuth } from "@/lib/auth/auth-context"
-import { appendStaff } from "@/lib/client-store"
-import { type StaffMember } from "@/lib/staff"
+import {
+  CAPABILITY_LABELS,
+  CAPABILITY_ORDER,
+  PERMISSIONS,
+  SYSTEM_ROLE_LABELS,
+  SYSTEM_ROLE_SUMMARY,
+  type Capability,
+  type SystemRole,
+} from "@/lib/auth/roles"
+import { inviteUser } from "@/lib/users"
 import { cn } from "@/lib/utils"
 import { LogoMark } from "@/components/brand/logo"
 import { Splash } from "@/components/brand/splash"
@@ -31,8 +39,7 @@ const STEPS = [
   "Org. details",
   "Credentialing",
   "Services",
-  "Invite Team Members",
-  "Invite Workers",
+  "Invite Managers",
 ] as const
 
 const STAFF_OPTIONS = ["1–10", "11–50", "51–200", "201–1000", "1000+"]
@@ -97,13 +104,38 @@ const PROGRAM_SERVICES = [
   "Vision Rehabilitation Services",
 ]
 
-const TEAM_ROLES = ["Admin", "Supervisor"]
-const TEAM_PERMISSIONS = [
-  "Full access",
-  "Manage courses",
-  "Manage staff",
-  "View only",
-]
+/**
+ * Manager (system-role) options offered during onboarding. These are the
+ * elevated, non-owner clearances from the PRD — permissions are predefined by
+ * the role (see PERMISSIONS / SYSTEM_ROLE_SUMMARY), never hand-picked here.
+ * Owner is the account creator; Super Admin is Theraptly-internal — both omitted.
+ */
+const MANAGER_ROLES: SystemRole[] = ["hr", "clinical_director", "finance"]
+
+/**
+ * Value→label items for the role Select. Providing `items` lets the trigger
+ * show just the role name while each dropdown option renders a richer
+ * label + access summary.
+ */
+const ROLE_ITEMS = MANAGER_ROLES.map((r) => ({
+  value: r,
+  label: SYSTEM_ROLE_LABELS[r],
+}))
+
+/** Capabilities a role grants, in display order — drives the permission list. */
+function capabilitiesFor(role: SystemRole): Capability[] {
+  return CAPABILITY_ORDER.filter((c) => PERMISSIONS[role].capabilities.has(c))
+}
+
+/** Resolve a CSV role cell ("HR" / "Clinical Director" / a role key) to a role. */
+function matchManagerRole(raw: string): SystemRole | "" {
+  const v = (raw ?? "").trim().toLowerCase()
+  return (
+    MANAGER_ROLES.find(
+      (r) => r === v || SYSTEM_ROLE_LABELS[r].toLowerCase() === v
+    ) ?? ""
+  )
+}
 
 const PHONE_COUNTRIES = [
   { code: "US", dial: "+1", flag: "🇺🇸", label: "United States" },
@@ -181,19 +213,14 @@ export default function OnboardingPage() {
   const [programs, setPrograms] = useState<string[]>([])
   const [servicesTouched, setServicesTouched] = useState(false)
 
-  // Step 4 — Invite Team Members
-  const [teamRows, setTeamRows] = useState<
-    { id: string; email: string; role: string; permission: string }[]
+  // Step 4 — Invite managers (system-role users; permissions set by role)
+  const [managerRows, setManagerRows] = useState<
+    { id: string; email: string; role: SystemRole | "" }[]
   >([
-    { id: "tm-1", email: "", role: "", permission: "" },
-    { id: "tm-2", email: "", role: "", permission: "" },
-    { id: "tm-3", email: "", role: "", permission: "" },
+    { id: "mgr-1", email: "", role: "" },
+    { id: "mgr-2", email: "", role: "" },
+    { id: "mgr-3", email: "", role: "" },
   ])
-
-  // Step 5 — Invite Workers
-  const [workerInput, setWorkerInput] = useState("")
-  const [workerEmails, setWorkerEmails] = useState<string[]>([])
-  const [workerError, setWorkerError] = useState<string | null>(null)
 
   useEffect(() => {
     if (loading) return
@@ -259,46 +286,52 @@ export default function OnboardingPage() {
     )
   }
 
-  function updateTeamRow(
+  function updateManagerRow(
     id: string,
-    patch: Partial<{ email: string; role: string; permission: string }>
+    patch: Partial<{ email: string; role: SystemRole | "" }>
   ) {
-    setTeamRows((rows) =>
+    setManagerRows((rows) =>
       rows.map((r) => (r.id === id ? { ...r, ...patch } : r))
     )
   }
-  function addTeamRow() {
-    setTeamRows((rows) => [
+  function addManagerRow() {
+    setManagerRows((rows) => [
       ...rows,
       {
-        id: `tm-${rows.length + 1}-${Math.floor(performance.now())}`,
+        id: `mgr-${rows.length + 1}-${Math.floor(performance.now())}`,
         email: "",
         role: "",
-        permission: "",
       },
     ])
   }
-  function removeTeamRow(id: string) {
-    setTeamRows((rows) => (rows.length > 1 ? rows.filter((r) => r.id !== id) : rows))
+  function removeManagerRow(id: string) {
+    setManagerRows((rows) =>
+      rows.length > 1 ? rows.filter((r) => r.id !== id) : rows
+    )
   }
-
-  function commitWorkerEmails(raw: string) {
-    const parts = raw
-      .split(/[,\s]+/)
-      .map((p) => p.trim())
-      .filter(Boolean)
-    if (!parts.length) return
-    const bad = parts.find((p) => !EMAIL_RE.test(p))
-    if (bad) {
-      setWorkerError(`“${bad}” is not a valid email`)
-      return
-    }
-    setWorkerError(null)
-    setWorkerEmails((prev) => Array.from(new Set([...prev, ...parts])))
-    setWorkerInput("")
-  }
-  function removeWorkerEmail(email: string) {
-    setWorkerEmails((prev) => prev.filter((e) => e !== email))
+  /** Bulk-add managers from a CSV import: fill blank rows first, then append. */
+  function importManagerRows(
+    parsed: { email: string; role: SystemRole | "" }[]
+  ) {
+    if (!parsed.length) return
+    setManagerRows((rows) => {
+      const next = [...rows]
+      let pi = 0
+      for (let i = 0; i < next.length && pi < parsed.length; i++) {
+        if (!next[i].email.trim()) {
+          next[i] = { ...next[i], ...parsed[pi] }
+          pi++
+        }
+      }
+      while (pi < parsed.length) {
+        next.push({
+          id: `mgr-${next.length + 1}-${Math.floor(performance.now())}`,
+          ...parsed[pi],
+        })
+        pi++
+      }
+      return next
+    })
   }
 
   function addFiles(list: FileList | File[] | null) {
@@ -326,33 +359,24 @@ export default function OnboardingPage() {
         teamSize: details.staff,
         frameworks: [],
       })
-      // Materialise team members + workers from the wizard so /staff isn't
-      // empty after onboarding. Backend will replace this with real invites.
-      const seeded: StaffMember[] = []
-      teamRows
-        .filter((r) => r.email.trim() && r.role.trim())
+      // Materialise the invited managers as system-role users so they appear
+      // in Settings → Users & Permissions after onboarding. Their permissions
+      // come from the role, not from this form. Backend replaces this with
+      // real email invites.
+      managerRows
+        .filter((r) => r.email.trim() && r.role)
         .forEach((r) => {
-          seeded.push({
-            id: `team-${Math.random().toString(36).slice(2, 10)}`,
-            name: r.email.split("@")[0].replace(/[._]/g, " "),
-            email: r.email.trim(),
-            role: (r.role as StaffMember["role"]) || "Supervisor",
-            invitedDaysAgo: 0,
-            online: false,
-            jobTitle: r.permission || undefined,
+          const email = r.email.trim()
+          inviteUser({
+            id: `mgr-${Math.random().toString(36).slice(2, 10)}`,
+            name: email.split("@")[0].replace(/[._]/g, " "),
+            email,
+            systemRole: r.role as SystemRole,
+            workerRole: "others",
+            status: "invited",
+            lastActive: "Invited just now",
           })
         })
-      workerEmails.forEach((e) =>
-        seeded.push({
-          id: `worker-${Math.random().toString(36).slice(2, 10)}`,
-          name: e.split("@")[0].replace(/[._]/g, " "),
-          email: e,
-          role: "Direct Support Professional (DSP)",
-          invitedDaysAgo: 0,
-          online: false,
-        })
-      )
-      if (seeded.length) appendStaff(seeded)
       router.replace("/onboarding/done")
     } catch {
       toast.error("Something went wrong. Please try again.")
@@ -385,13 +409,27 @@ export default function OnboardingPage() {
       }
     }
     if (step === STEPS.length - 1) {
-      // Commit any pending worker email before finishing.
-      if (workerInput.trim()) commitWorkerEmails(workerInput)
+      // Can't finish until every required step is complete. Jump to the first
+      // one that's missing details and surface its errors.
+      if (!stepOneValid || !stepTwoValid || !stepThreeValid) {
+        setSubmitAttempted(true)
+        setHipaaTouched(true)
+        setServicesTouched(true)
+        setStep(!stepOneValid ? 0 : !stepTwoValid ? 1 : 2)
+        toast.error("Complete the required details in every step to finish")
+        return
+      }
       finish()
     } else {
       setStep((s) => s + 1)
       setSubmitAttempted(false)
     }
+  }
+
+  /** Free navigation via the stepper circles — no per-step gate. */
+  function goToStep(target: number) {
+    setSubmitAttempted(false)
+    setStep(target)
   }
 
   function skipForNow() {
@@ -412,16 +450,15 @@ export default function OnboardingPage() {
         </button>
       </header>
 
-      <div className="mx-auto w-full max-w-[1080px] px-5 pt-10 sm:pt-[60px]">
-        <Stepper current={step} />
+      <div className="mx-auto w-full max-w-[1120px] px-5 pt-10 sm:pt-[60px]">
+        <Stepper current={step} onNavigate={goToStep} />
 
         <div className="mx-auto mt-12 max-w-[800px] text-center sm:mt-[60px]">
           <h1 className="font-display text-[28px] font-bold leading-tight tracking-[0.01em] text-[#171a1f] sm:text-[34px]">
             {step === 0 && "Tell us about your organization"}
             {step === 1 && "Credentialing & Documentation"}
             {step === 2 && "Help us understand your Services"}
-            {step === 3 && "Invite Team Members"}
-            {step === 4 && "Invite your Workers/Staffs"}
+            {step === 3 && "Invite your managers"}
           </h1>
           <p className="mt-2 text-[15px] leading-relaxed text-[#757575] sm:text-[17px]">
             {step === 0 &&
@@ -431,9 +468,7 @@ export default function OnboardingPage() {
             {step === 2 &&
               "Choose the services that reflect the people you service."}
             {step === 3 &&
-              "Invite your team members to your organization to manage your learning system."}
-            {step === 4 &&
-              "Add your team so they can access assigned trainings and complete compliance requirements."}
+              "Invite the people who help you run this facility. Each manager's access is set by their role — you can add workers later from Staff Management."}
           </p>
         </div>
 
@@ -481,21 +516,12 @@ export default function OnboardingPage() {
             />
           )}
           {step === 3 && (
-            <InviteTeamStep
-              rows={teamRows}
-              onUpdate={updateTeamRow}
-              onRemove={removeTeamRow}
-              onAdd={addTeamRow}
-            />
-          )}
-          {step === 4 && (
-            <InviteWorkersStep
-              input={workerInput}
-              onInputChange={setWorkerInput}
-              emails={workerEmails}
-              onCommit={commitWorkerEmails}
-              onRemove={removeWorkerEmail}
-              error={workerError}
+            <InviteManagersStep
+              rows={managerRows}
+              onUpdate={updateManagerRow}
+              onRemove={removeManagerRow}
+              onAdd={addManagerRow}
+              onImport={importManagerRows}
             />
           )}
         </div>
@@ -545,7 +571,13 @@ export default function OnboardingPage() {
 
 /* ---------- Stepper ---------- */
 
-function Stepper({ current }: { current: number }) {
+function Stepper({
+  current,
+  onNavigate,
+}: {
+  current: number
+  onNavigate: (i: number) => void
+}) {
   return (
     <div className="flex w-full items-start">
       {STEPS.map((label, i) => {
@@ -555,26 +587,34 @@ function Stepper({ current }: { current: number }) {
         const isLast = i === STEPS.length - 1
         return (
           <div key={label} className="flex flex-1 items-start last:flex-none">
-            <div className="flex flex-col items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onNavigate(i)}
+              aria-current={active ? "step" : undefined}
+              aria-label={`Go to step ${i + 1}: ${label}`}
+              className="group flex flex-col items-center gap-2 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+            >
               <span
                 className={cn(
                   "grid size-[30px] place-items-center rounded-full text-[13px] font-semibold transition-colors",
                   colored
                     ? "bg-primary text-white"
-                    : "border border-[#d0d5dd] text-[#98a2b3]"
+                    : "border border-[#d0d5dd] text-[#98a2b3] group-hover:border-primary group-hover:text-primary"
                 )}
               >
                 {i + 1}
               </span>
               <span
                 className={cn(
-                  "whitespace-nowrap text-[13px] font-semibold",
-                  colored ? "text-primary" : "text-[#98a2b3]"
+                  "whitespace-nowrap text-[13px] font-semibold transition-colors",
+                  colored
+                    ? "text-primary"
+                    : "text-[#98a2b3] group-hover:text-primary"
                 )}
               >
                 {label}
               </span>
-            </div>
+            </button>
             {!isLast && (
               <div
                 className={cn(
@@ -1231,27 +1271,69 @@ function CheckboxOption({
   )
 }
 
-/* ---------- Step 4: Invite team members ---------- */
+/* ---------- Step 4: Invite managers (system-role users) ---------- */
 
-function InviteTeamStep({
+function InviteManagersStep({
   rows,
   onUpdate,
   onRemove,
   onAdd,
+  onImport,
 }: {
-  rows: { id: string; email: string; role: string; permission: string }[]
+  rows: { id: string; email: string; role: SystemRole | "" }[]
   onUpdate: (
     id: string,
-    patch: Partial<{ email: string; role: string; permission: string }>
+    patch: Partial<{ email: string; role: SystemRole | "" }>
   ) => void
   onRemove: (id: string) => void
   onAdd: () => void
+  onImport: (parsed: { email: string; role: SystemRole | "" }[]) => void
 }) {
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  async function handleCsv(file: File) {
+    const text = await file.text()
+    const lines = text
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter(Boolean)
+    const parsed: { email: string; role: SystemRole | "" }[] = []
+    for (const line of lines) {
+      const [emailRaw, roleRaw] = line.split(",").map((s) => (s ?? "").trim())
+      if (!emailRaw || !EMAIL_RE.test(emailRaw)) continue // skip header / invalid
+      parsed.push({ email: emailRaw, role: matchManagerRole(roleRaw) })
+    }
+    if (!parsed.length) {
+      toast.error("No valid emails found in that file")
+      return
+    }
+    onImport(parsed)
+    toast.success(`Imported ${parsed.length} manager(s)`)
+  }
+
+  function downloadTemplate() {
+    const blob = new Blob(
+      [
+        "email,role\n",
+        "jane.hr@example.com,HR\n",
+        "sam.director@example.com,Clinical Director\n",
+        "alex.finance@example.com,Finance\n",
+      ],
+      { type: "text/csv" }
+    )
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "theraptly-managers-template.csv"
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
-    <div className="flex flex-col gap-5">
+    <div className="mx-auto flex w-full max-w-[760px] flex-col gap-5">
       <div className="flex flex-col gap-[54px]">
         {rows.map((row, i) => (
-          <TeamMemberRow
+          <ManagerRow
             key={row.id}
             row={row}
             showLabels={i === 0}
@@ -1262,34 +1344,62 @@ function InviteTeamStep({
         ))}
       </div>
 
-      <button
-        type="button"
-        onClick={onAdd}
-        className="inline-flex w-fit items-center gap-2 rounded-full px-2 py-2 text-[16px] font-semibold text-primary transition-colors hover:bg-[#f3f4ff]"
-      >
-        <PlusCircle className="size-5" /> Add team member
-      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) handleCsv(file)
+          e.target.value = ""
+        }}
+      />
+
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+        <button
+          type="button"
+          onClick={onAdd}
+          className="inline-flex w-fit items-center gap-2 rounded-full px-2 py-2 text-[16px] font-semibold text-primary transition-colors hover:bg-[#f3f4ff]"
+        >
+          <PlusCircle className="size-5" /> Add another manager
+        </button>
+        <span className="hidden h-5 w-px bg-[#e5e7ea] sm:block" />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="inline-flex w-fit items-center gap-2 rounded-full px-2 py-2 text-[16px] font-semibold text-primary transition-colors hover:bg-[#f3f4ff]"
+        >
+          <FolderUp className="size-5" /> Import with .csv file instead
+        </button>
+        <span className="hidden h-5 w-px bg-[#e5e7ea] sm:block" />
+        <button
+          type="button"
+          onClick={downloadTemplate}
+          className="rounded-full px-2 py-2 text-[16px] font-semibold text-primary transition-colors hover:bg-[#f3f4ff]"
+        >
+          Download sample .csv template
+        </button>
+      </div>
     </div>
   )
 }
 
-function TeamMemberRow({
+function ManagerRow({
   row,
   showLabels,
   showRemove,
   onUpdate,
   onRemove,
 }: {
-  row: { id: string; email: string; role: string; permission: string }
+  row: { id: string; email: string; role: SystemRole | "" }
   showLabels: boolean
   showRemove: boolean
-  onUpdate: (
-    patch: Partial<{ email: string; role: string; permission: string }>
-  ) => void
+  onUpdate: (patch: Partial<{ email: string; role: SystemRole | "" }>) => void
   onRemove: () => void
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
       {/* Email */}
       <div className="flex flex-1 flex-col gap-3">
         {showLabels && (
@@ -1303,58 +1413,44 @@ function TeamMemberRow({
             type="email"
             value={row.email}
             onChange={(e) => onUpdate({ email: e.target.value })}
-            placeholder="Enter team member's email"
+            placeholder="Enter manager's email"
             className="h-full flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-[#9ea2ae] sm:text-[16px]"
           />
         </div>
       </div>
 
-      {/* Role */}
-      <div className="flex flex-1 flex-col gap-3">
+      {/* Role — permissions are a property of the role, surfaced here */}
+      <div className="flex flex-col gap-3 sm:w-[240px] sm:shrink-0">
         {showLabels && (
           <span className="text-[16px] font-medium text-[#131927] sm:text-[18px]">
-            Roles
+            Role
           </span>
         )}
         <Select
-          value={row.role || undefined}
-          onValueChange={(v) => onUpdate({ role: v ?? "" })}
+          items={ROLE_ITEMS}
+          value={row.role}
+          onValueChange={(v) => onUpdate({ role: (v ?? "") as SystemRole | "" })}
         >
           <SelectTrigger className="!h-[56px] w-full rounded-[12px] border-[1.5px] border-[#e5e7ea] bg-white px-[18px] text-[16px] data-[placeholder]:text-[#8c8c8c]">
             <SelectValue placeholder="Select role" />
           </SelectTrigger>
-          <SelectContent>
-            {TEAM_ROLES.map((r) => (
-              <SelectItem key={r} value={r}>
-                {r}
+          <SelectContent className="w-(--anchor-width) max-w-[420px]">
+            {MANAGER_ROLES.map((r) => (
+              <SelectItem key={r} value={r} className="items-start py-2.5">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[15px] font-medium text-[#101928]">
+                    {SYSTEM_ROLE_LABELS[r]}
+                  </span>
+                  <span className="text-[13px] leading-snug whitespace-normal text-[#667085]">
+                    {SYSTEM_ROLE_SUMMARY[r]}
+                  </span>
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
-      </div>
 
-      {/* Permissions */}
-      <div className="flex flex-1 flex-col gap-3">
-        {showLabels && (
-          <span className="text-[16px] font-medium text-[#131927] sm:text-[18px]">
-            Permissions
-          </span>
-        )}
-        <Select
-          value={row.permission || undefined}
-          onValueChange={(v) => onUpdate({ permission: v ?? "" })}
-        >
-          <SelectTrigger className="!h-[56px] w-full rounded-[12px] border-[1.5px] border-[#e5e7ea] bg-white px-[18px] text-[16px] data-[placeholder]:text-[#8c8c8c]">
-            <SelectValue placeholder="Permissions" />
-          </SelectTrigger>
-          <SelectContent>
-            {TEAM_PERMISSIONS.map((p) => (
-              <SelectItem key={p} value={p}>
-                {p}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {row.role && <PermissionsPopover role={row.role} />}
       </div>
 
       {showRemove && (
@@ -1364,7 +1460,7 @@ function TeamMemberRow({
           aria-label="Remove row"
           className={cn(
             "grid size-[56px] shrink-0 place-items-center rounded-[12px] text-[#98a2b3] transition-colors hover:bg-[#f9fafb] hover:text-destructive",
-            showLabels && "sm:self-end"
+            showLabels && "sm:mt-[42px]"
           )}
         >
           <Trash2 className="size-5" />
@@ -1389,130 +1485,56 @@ function MailIcon() {
   )
 }
 
-/* ---------- Step 5: Invite workers ---------- */
+/**
+ * Small "View permissions" link that pops a read-only checklist of everything
+ * the chosen role grants. Permissions are predefined, so this is the at-a-glance
+ * confirmation of what the role can do — the full reference lives in Settings.
+ */
+function PermissionsPopover({ role }: { role: SystemRole }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement | null>(null)
+  const caps = capabilitiesFor(role)
 
-function InviteWorkersStep({
-  input,
-  onInputChange,
-  emails,
-  onCommit,
-  onRemove,
-  error,
-}: {
-  input: string
-  onInputChange: (v: string) => void
-  emails: string[]
-  onCommit: (raw: string) => void
-  onRemove: (email: string) => void
-  error: string | null
-}) {
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
-
-  function downloadTemplate() {
-    const blob = new Blob(["email\nfirst.worker@example.com\n"], {
-      type: "text/csv",
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "theraptly-workers-template.csv"
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  async function handleCsv(file: File) {
-    const text = await file.text()
-    const candidates = text
-      .split(/[\n,;\r]+/)
-      .map((s) => s.trim())
-      .filter((s) => EMAIL_RE.test(s))
-    if (!candidates.length) {
-      toast.error("No valid emails found in that file")
-      return
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (!ref.current?.contains(e.target as Node)) setOpen(false)
     }
-    onCommit(candidates.join(","))
-    toast.success(`Imported ${candidates.length} email(s)`)
-  }
+    if (open) document.addEventListener("mousedown", onDoc)
+    return () => document.removeEventListener("mousedown", onDoc)
+  }, [open])
 
   return (
-    <div className="mx-auto flex w-full max-w-[820px] flex-col gap-5">
-      <div className="flex flex-col gap-3">
-        <div className="flex min-h-[56px] w-full flex-wrap items-center gap-2 rounded-[12px] border-[1.5px] border-[#e5e7ea] bg-white px-4 py-3 focus-within:border-primary focus-within:ring-3 focus-within:ring-primary/15">
-          {emails.map((e) => (
-            <span
-              key={e}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#f3f4ff] py-1.5 pl-3 pr-1.5 text-[14px] font-medium text-primary"
-            >
-              {e}
-              <button
-                type="button"
-                aria-label={`Remove ${e}`}
-                onClick={() => onRemove(e)}
-                className="grid size-5 place-items-center rounded-full transition-colors hover:bg-primary/10"
+    <div ref={ref} className="relative w-fit">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 text-[13px] font-medium text-primary transition-colors hover:bg-[#f3f4ff] sm:text-[14px]"
+      >
+        <Info className="size-3.5" />
+        View permissions
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-8 z-20 w-[300px] rounded-xl border border-[#e5e7ea] bg-white p-4 shadow-lg">
+          <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#98a2b3]">
+            {SYSTEM_ROLE_LABELS[role]} can
+          </p>
+          <ul className="mt-3 flex flex-col gap-2.5">
+            {caps.map((c) => (
+              <li
+                key={c}
+                className="flex items-center gap-2.5 text-[14px] text-[#344054]"
               >
-                <X className="size-3.5" />
-              </button>
-            </span>
-          ))}
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => onInputChange(e.target.value)}
-            onBlur={() => input.trim() && onCommit(input)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === ",") {
-                e.preventDefault()
-                onCommit(input)
-              } else if (
-                e.key === "Backspace" &&
-                !input &&
-                emails.length > 0
-              ) {
-                onRemove(emails[emails.length - 1])
-              }
-            }}
-            placeholder={
-              emails.length
-                ? ""
-                : "Add emails separated with commas to invite"
-            }
-            className="min-w-[200px] flex-1 bg-transparent py-1 text-[15px] text-foreground outline-none placeholder:text-[#979797] sm:text-[16px]"
-          />
+                <span className="grid size-4 shrink-0 place-items-center rounded-full bg-[#f4f3ff] text-primary">
+                  <Check className="size-3" strokeWidth={3} />
+                </span>
+                {CAPABILITY_LABELS[c]}
+              </li>
+            ))}
+          </ul>
         </div>
-        {error && (
-          <p className="text-[13px] font-medium text-destructive">{error}</p>
-        )}
-      </div>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept=".csv"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0]
-          if (file) handleCsv(file)
-          e.target.value = ""
-        }}
-      />
-
-      <div className="flex flex-wrap items-center gap-5">
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="inline-flex items-center gap-2 rounded-full px-2 py-2 text-[15px] font-semibold text-primary transition-colors hover:bg-[#f3f4ff] sm:text-[16px]"
-        >
-          <PlusCircle className="size-5" /> Import with .csv file instead
-        </button>
-        <span className="h-5 w-px bg-[#e5e7ea]" />
-        <button
-          type="button"
-          onClick={downloadTemplate}
-          className="rounded-full px-2 py-2 text-[15px] font-semibold text-primary transition-colors hover:bg-[#f3f4ff] sm:text-[16px]"
-        >
-          Download sample .csv template
-        </button>
-      </div>
+      )}
     </div>
   )
 }
+
